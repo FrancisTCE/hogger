@@ -29,10 +29,9 @@ impl HogService {
             Some(timestamp),
             None,
         );
-        // Serialize hog to JSON string
+        
         let payload = serde_json::to_vec(&hog)?;
 
-        // Publish to RabbitMQ queue named "hog_queue" (change if needed)
         self.rabbit_channel
             .basic_publish(
                 "",             // exchange, "" = default direct exchange
@@ -43,7 +42,7 @@ impl HogService {
             )
             .await?
             .await?; 
-        
+
         Ok(hog)
     }
 

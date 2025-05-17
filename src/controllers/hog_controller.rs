@@ -1,12 +1,15 @@
 use axum::{extract::Extension, Json, response::IntoResponse, http::StatusCode};
+use serde_json::json;
 use std::sync::Arc;
 
 use crate::models::client_request::ClientRequest;
+use crate::models::options::OptionsRequest;
 use crate::services::hog_service::HogService;
 
 pub async fn get_hogs(
     Extension(hog_service): Extension<Arc<HogService>>,
 ) -> impl IntoResponse {
+    println!("Received request to get hogs");
     match hog_service.get_hogs().await {
         Ok(hogs) => Json(hogs).into_response(),
          Err(err) => {
@@ -20,6 +23,7 @@ pub async fn create_hog(
     Extension(hog_service): Extension<Arc<HogService>>,
     Json(client_request): Json<ClientRequest>,
 ) -> impl IntoResponse {
+    print!("Received client request: {:?}", client_request);
     match hog_service.create_hog(client_request).await {
         Ok(hog) => Json(hog).into_response(),
         Err(err) => {
@@ -27,5 +31,15 @@ pub async fn create_hog(
             (StatusCode::INTERNAL_SERVER_ERROR, error_message).into_response()
         }
     }
+}
+
+pub async fn handle_search(
+    Extension(hog_service): Extension<Arc<HogService>>,
+    Json(options): Json<OptionsRequest>,
+) -> impl IntoResponse {
+    println!("Received search options: {:?}", options);
+    let search_type = options.search_type.clone();
+    let body = json!({ "result": search_type });
+    Json(body).into_response()
 }
 

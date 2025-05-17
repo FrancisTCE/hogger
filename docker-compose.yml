@@ -47,8 +47,8 @@ services:
   rabbitmq:
     image: rabbitmq:3-management
     ports:
-      - "5672:5672"     # AMQP port for apps
-      - "15672:15672"   # RabbitMQ management UI (optional)
+      - "5672:5672"     
+      - "15672:15672"   
     networks:
       - hogger-net
 
