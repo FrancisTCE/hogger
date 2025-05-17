@@ -38,8 +38,6 @@ Feel free to contribute, file issues, or just stare at the hog 🐗.
 
 ## ✅ What works?
 
-Currently 3 endpoints:
-
 ---
 
 ### 🔸 POST ::3000/hogs (create a hog)
