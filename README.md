@@ -34,11 +34,7 @@ Because it **hogs** logs. Simple.
 
 ---
 
-Feel free to contribute, file issues, or just stare at the hog 🐗.
-
 ## ✅ What works?
-
----
 
 ### 🔸 POST ::3000/hogs (create a hog)
 
@@ -164,3 +160,6 @@ Example:
 }
 ```
 returns all system debug log from the data-ingestor
+
+### Feel free to contribute, file issues, or just stare at the hog 🐗.
+
