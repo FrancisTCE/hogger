@@ -1,0 +1,35 @@
+version: "3.9"
+
+services:
+  hogger:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - MONGODB_URI="mongodb://admin:admin@localhost:27017/admin"
+      - DATABASE_NAME="hogger"
+      - PORT=3000
+      - BEARER_TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzZXJ2aWNlIjoiYXBpIiwicm9sZSI6ImFkbWluIiwiaXNzdWVkQnkiOiJ0b2tlbi1nZW5lcmF0b3IiLCJpYXQiOjE3NDUzNDc3MTN9.ttTOeBN7RPVOreIfJpt7elaePBNVPiYWMp234r8zglo"
+    networks:
+      - hogger-net
+    depends_on:
+      - mongo
+
+  mongo:
+    image: mongo:6.0
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+    - hogger-net
+volumes:
+  mongo_data:
+
+networks:
+  hogger-net:
+    driver: bridge
