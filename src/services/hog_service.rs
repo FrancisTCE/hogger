@@ -67,9 +67,8 @@ impl HogService {
     pub async fn search_hogs(
         &self,
         options: OptionsRequest,
-        search_type: SearchType,
     ) -> Result<Vec<Hog>, mongodb::error::Error> {
-        let filter = build_filter(options.clone(), search_type);
+        let filter = build_filter(&options.clone());
         let mut cursor = self.collection.find(filter).await?;
         let mut hogs = Vec::new();
 

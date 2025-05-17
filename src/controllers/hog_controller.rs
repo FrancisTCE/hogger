@@ -35,20 +35,13 @@ pub async fn handle_search(
     Extension(hog_service): Extension<Arc<HogService>>,
     Json(options): Json<OptionsRequest>,
 ) -> impl IntoResponse {
-    println!("Received search options: {:?}", options);
+
     let search_type = options.search_type.clone();
     if search_type.is_empty() {
         return (StatusCode::BAD_REQUEST, "Search type is required").into_response();
     }
-    let search_type = match options.search_type.parse::<SearchType>() {
-        Ok(s) => s,
-        Err(_) => {
-            let err_body = json!({ "error": "Invalid search type" });
-            return (StatusCode::BAD_REQUEST, Json(err_body)).into_response();
-        }
-    };
 
-    match hog_service.search_hogs(options, search_type).await {
+    match hog_service.search_hogs(options).await {
         Ok(hogs) => Json(hogs).into_response(),
         Err(err) => {
             let error_message = format!("Failed to fetch hogs: {}", err);
