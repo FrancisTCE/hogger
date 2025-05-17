@@ -1,12 +1,12 @@
 
-use crate::models::hog::Hog;
 use crate::models::client_request::ClientRequest;
+use crate::models::options::{OptionsRequest, SearchType, build_filter};
+use crate::models::{hog::Hog, options};
+use chrono::Utc;
 use futures::StreamExt;
+use lapin::{BasicProperties, Channel};
 use mongodb::{Collection, Database, bson::doc};
 use uuid::Uuid;
-use chrono::Utc;
-use lapin::{Channel, BasicProperties};
-
 
 pub struct HogService {
     collection: Collection<Hog>,
@@ -16,32 +16,35 @@ pub struct HogService {
 impl HogService {
     pub fn new(db: &Database, rabbit_channel: Channel) -> Self {
         let collection = db.collection::<Hog>("hog");
-        HogService { collection, rabbit_channel }
+        HogService {
+            collection,
+            rabbit_channel,
+        }
     }
 
-    pub async fn create_hog(&self, client_request:ClientRequest) -> anyhow::Result<Hog> {
+    pub async fn create_hog(&self, client_request: ClientRequest) -> anyhow::Result<Hog> {
         let uuid = Uuid::new_v4();
         let timestamp = Utc::now();
-        
+
         let hog = Hog::new(
             client_request,
             Some(uuid.to_string()),
             Some(timestamp),
             None,
         );
-        
+
         let payload = serde_json::to_vec(&hog)?;
 
         self.rabbit_channel
             .basic_publish(
-                "",             // exchange, "" = default direct exchange
-                "hog_queue",    // routing key = queue name
+                "",          // exchange, "" = default direct exchange
+                "hog_queue", // routing key = queue name
                 lapin::options::BasicPublishOptions::default(),
                 &payload,
                 BasicProperties::default(),
             )
             .await?
-            .await?; 
+            .await?;
 
         Ok(hog)
     }
@@ -58,6 +61,24 @@ impl HogService {
             }
         }
 
+        Ok(hogs)
+    }
+
+    pub async fn search_hogs(
+        &self,
+        options: OptionsRequest,
+        search_type: SearchType,
+    ) -> Result<Vec<Hog>, mongodb::error::Error> {
+        let filter = build_filter(options.clone(), search_type);
+        let mut cursor = self.collection.find(filter).await?;
+        let mut hogs = Vec::new();
+
+        while let Some(result) = cursor.next().await {
+            match result {
+                Ok(hog) => hogs.push(hog),
+                Err(e) => return Err(e.into()),
+            }
+        }
         Ok(hogs)
     }
 }

@@ -1,68 +1,5 @@
-use std::str::FromStr;
-
-use serde::{Deserialize, Serialize};
-use mongodb::bson;
-use mongodb::{Collection, Database, bson::doc};
-
-
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct OptionsRequest {
-    pub search_type: String,
-    pub timestamp: Option<chrono::DateTime<chrono::Utc>>,
-    pub timestamp_start: Option<chrono::DateTime<chrono::Utc>>,
-    pub timestamp_end: Option<chrono::DateTime<chrono::Utc>>,
-    pub log_level: Option<String>,
-    pub log_message: Option<String>,
-    pub log_data: Option<serde_json::Value>,
-    pub log_type: Option<String>,
-    pub log_source: Option<String>,
-    pub log_source_id: Option<String>,
-    pub log_uuid: Option<String>,
-    pub hog_uuid: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-pub enum SearchType {
-    TimeInterval,
-    HogTimeInterval,
-    LogLevel,
-    LogMessage,
-    LogData,
-    LogType,
-    LogSource,
-    LogSourceId,
-    LogUuid,
-    HogUuid,
-    HogTimestamp,
-}
-
-impl std::str::FromStr for SearchType {
-    type Err = ();
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "TIME_INTERVAL" => Ok(SearchType::TimeInterval),
-            "HOG_TIME_INTERVAL" => Ok(SearchType::HogTimeInterval),
-            "LOG_LEVEL" => Ok(SearchType::LogLevel),
-            "LOG_MESSAGE" => Ok(SearchType::LogMessage),
-            "LOG_DATA" => Ok(SearchType::LogData),
-            "LOG_TYPE" => Ok(SearchType::LogType),
-            "LOG_SOURCE" => Ok(SearchType::LogSource),
-            "LOG_SOURCE_ID" => Ok(SearchType::LogSourceId),
-            "LOG_UUID" => Ok(SearchType::LogUuid),
-            "HOG_UUID" => Ok(SearchType::HogUuid),
-            "HOG_TIMESTAMP" => Ok(SearchType::HogTimestamp),
-            _ => Err(()),
-        }
-    }
-}
-
-
-pub fn build_filter(options: OptionsRequest, search_type: SearchType) -> mongodb::bson::Document {
-
-    let filter = match search_type {
+pub async fn build_filter(options: OptionsRequest) {
+    return match search_type {
             SearchType::LogSource => {
                 if let Some(ref log_source) = options.log_source {
                     doc! { "log_source": log_source }
@@ -155,5 +92,5 @@ pub fn build_filter(options: OptionsRequest, search_type: SearchType) -> mongodb
                 }
             }
         };
-    filter
+
 }
