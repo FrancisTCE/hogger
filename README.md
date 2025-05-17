@@ -36,6 +36,37 @@ Because it **hogs** logs. Simple.
 
 Feel free to contribute, file issues, or just stare at the hog 🐗.
 
+## ✅ What works?
+
+Currently 3 endpoints:
+
+---
+
+### 🔸 POST ::3000/hogs (create a hog)
+
+**Mandatory fields:**
+- `log_timestamp`
+- `log_message`
+
+**Sample payload:**
+
+```json
+{
+  "log_timestamp": "2025-05-17T19:40:49.367Z",
+  "log_level": "DEBUG",
+  "log_message": "This is a test log message 249",
+  "log_data": {
+    "key": "value",
+    "number": 43.713470436225535
+  },
+  "log_type": "system",
+  "log_source": "data-ingestor",
+  "log_source_id": "4654",
+  "hog_uuid": "286fb5c4-d7c4-4c96-89b7-649f5b7d54eb",
+  "hog_timestamp": "2025-05-17T19:40:49.405234765Z"
+}
+```
+
 ## What works?
 
 Currently 3 endpoints:
