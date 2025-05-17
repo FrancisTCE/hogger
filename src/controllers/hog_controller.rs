@@ -22,7 +22,10 @@ pub async fn create_hog(
 ) -> impl IntoResponse {
     match hog_service.create_hog(client_request).await {
         Ok(hog) => Json(hog).into_response(),
-        Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, "Failed to create hog").into_response(),
+        Err(err) => {
+            let error_message = format!("Failed to fetch hogs: {}", err);
+            (StatusCode::INTERNAL_SERVER_ERROR, error_message).into_response()
+        }
     }
 }
 

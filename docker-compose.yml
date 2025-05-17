@@ -6,10 +6,10 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - MONGODB_URI="mongodb://admin:admin@localhost:27017/admin"
-      - DATABASE_NAME="hogger"
+      - MONGODB_URI=mongodb://admin:admin@mongo:27017/admin
+      - DATABASE_NAME=hogger
       - PORT=3000
-      - BEARER_TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzZXJ2aWNlIjoiYXBpIiwicm9sZSI6ImFkbWluIiwiaXNzdWVkQnkiOiJ0b2tlbi1nZW5lcmF0b3IiLCJpYXQiOjE3NDUzNDc3MTN9.ttTOeBN7RPVOreIfJpt7elaePBNVPiYWMp234r8zglo"
+      - BEARER_TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzZXJ2aWNlIjoiYXBpIiwicm9sZSI6ImFkbWluIiwiaXNzdWVkQnkiOiJ0b2tlbi1nZW5lcmF0b3IiLCJpYXQiOjE3NDUzNDc3MTN9.ttTOeBN7RPVOreIfJpt7elaePBNVPiYWMp234r8zglo
     networks:
       - hogger-net
     depends_on:
