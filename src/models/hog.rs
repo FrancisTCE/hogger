@@ -9,7 +9,7 @@ pub struct Hog {
     pub client_request: ClientRequest,
     pub hog_uuid: Option<String>,
     pub hog_timestamp: Option<chrono::DateTime<chrono::Utc>>,
-    #[serde(rename = "_id")]
+    #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
     pub id: Option<ObjectId>,
 }
 

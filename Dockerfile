@@ -14,10 +14,10 @@ COPY src ./src
 RUN cargo build --release
 
 # ---- Runtime Stage ----
-FROM debian:buster-slim
+FROM debian:bookworm-slim
 
 # Install dependencies required to run the binary (e.g. SSL libs)
-RUN apt-get update && apt-get install -y libssl-dev ca-certificates && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y libssl3 ca-certificates && rm -rf /var/lib/apt/lists/*
 
 # Create app directory
 WORKDIR /usr/src/hogger
