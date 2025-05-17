@@ -13,6 +13,7 @@ pub struct Hog {
     pub id: Option<ObjectId>,
 }
 
+#[allow(dead_code)]
 impl Hog {
     pub fn new(
         client_request: ClientRequest,

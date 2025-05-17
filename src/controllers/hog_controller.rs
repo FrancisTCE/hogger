@@ -1,13 +1,11 @@
 use axum::{Json, extract::Extension, http::StatusCode, response::IntoResponse};
-use serde_json::json;
 use std::sync::Arc;
 
 use crate::models::client_request::ClientRequest;
-use crate::models::options::{OptionsRequest, SearchType};
+use crate::models::options::OptionsRequest;
 use crate::services::hog_service::HogService;
 
 pub async fn get_hogs(Extension(hog_service): Extension<Arc<HogService>>) -> impl IntoResponse {
-    println!("Received request to get hogs");
     match hog_service.get_hogs().await {
         Ok(hogs) => Json(hogs).into_response(),
         Err(err) => {
@@ -35,11 +33,6 @@ pub async fn handle_search(
     Extension(hog_service): Extension<Arc<HogService>>,
     Json(options): Json<OptionsRequest>,
 ) -> impl IntoResponse {
-
-    let search_type = options.search_type.clone();
-    if search_type.is_empty() {
-        return (StatusCode::BAD_REQUEST, "Search type is required").into_response();
-    }
 
     match hog_service.search_hogs(options).await {
         Ok(hogs) => Json(hogs).into_response(),

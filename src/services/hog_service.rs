@@ -1,7 +1,7 @@
 
 use crate::models::client_request::ClientRequest;
-use crate::models::options::{OptionsRequest, SearchType, build_filter};
-use crate::models::{hog::Hog, options};
+use crate::models::options::{self, OptionsRequest};
+use crate::models::hog::Hog;
 use chrono::Utc;
 use futures::StreamExt;
 use lapin::{BasicProperties, Channel};
@@ -68,7 +68,7 @@ impl HogService {
         &self,
         options: OptionsRequest,
     ) -> Result<Vec<Hog>, mongodb::error::Error> {
-        let filter = build_filter(&options.clone());
+        let filter = options::build_filter(&options.clone());
         let mut cursor = self.collection.find(filter).await?;
         let mut hogs = Vec::new();
 

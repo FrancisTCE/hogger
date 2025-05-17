@@ -1,14 +1,11 @@
-use std::str::FromStr;
 
 use serde::{Deserialize, Serialize};
 use mongodb::bson::{self, Document};
-use mongodb::{Collection, Database, bson::doc};
 
 
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OptionsRequest {
-    pub search_type: String,
     pub log_timestamp: Option<chrono::DateTime<chrono::Utc>>,
     pub log_timestamp_start: Option<chrono::DateTime<chrono::Utc>>,
     pub log_timestamp_end: Option<chrono::DateTime<chrono::Utc>>,
@@ -25,44 +22,7 @@ pub struct OptionsRequest {
     pub hog_uuid: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-pub enum SearchType {
-    TimeInterval,
-    HogTimeInterval,
-    LogLevel,
-    LogMessage,
-    LogData,
-    LogType,
-    LogSource,
-    LogSourceId,
-    LogUuid,
-    HogUuid,
-    HogTimestamp,
-}
-
-impl std::str::FromStr for SearchType {
-    type Err = ();
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "TIME_INTERVAL" => Ok(SearchType::TimeInterval),
-            "HOG_TIME_INTERVAL" => Ok(SearchType::HogTimeInterval),
-            "LOG_LEVEL" => Ok(SearchType::LogLevel),
-            "LOG_MESSAGE" => Ok(SearchType::LogMessage),
-            "LOG_DATA" => Ok(SearchType::LogData),
-            "LOG_TYPE" => Ok(SearchType::LogType),
-            "LOG_SOURCE" => Ok(SearchType::LogSource),
-            "LOG_SOURCE_ID" => Ok(SearchType::LogSourceId),
-            "LOG_UUID" => Ok(SearchType::LogUuid),
-            "HOG_UUID" => Ok(SearchType::HogUuid),
-            "HOG_TIMESTAMP" => Ok(SearchType::HogTimestamp),
-            _ => Err(()),
-        }
-    }
-}
-
-
+#[allow(dead_code)]
 pub fn build_filter(options: &OptionsRequest) -> Document {
     let mut filter = Document::new();
 
@@ -123,7 +83,7 @@ pub fn build_filter(options: &OptionsRequest) -> Document {
             filter.insert("hog_timestamp", hog_ts_filter);
         }
     }
-    
+
     if let Some(hog_ts) = options.hog_timestamp {
         filter.insert("hog_timestamp", bson::DateTime::from_millis(hog_ts.timestamp_millis()));
     }
