@@ -3,6 +3,14 @@ name = "hogger"
 version = "0.1.0"
 edition = "2024"
 
+[[bin]]
+name = "hogger"
+path = "src/main.rs"
+
+[[bin]]
+name = "hogger-worker"
+path = "src/worker.rs"
+
 [dependencies]
 axum = "0.8.4"
 serde = { version = "1", features = ["derive"] }
@@ -16,3 +24,5 @@ hyper = "1.6.0"
 axum-server = "0.7.2"
 futures = "0.3.31"
 uuid = "1.16.0"
+lapin = "2.5.3"
+anyhow = "1.0.98"

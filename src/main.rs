@@ -11,8 +11,9 @@ use std::{env, net::SocketAddr};
 async fn main() {
     dotenv().ok();
     let db = config::init_db().await.expect("Failed to connect to DB");
+    let rabbit_channel = config::init_rabbitmq().await.expect("Failed to connect to RabbitMQ");
 
-    let app = routes::create_router(db);
+    let app = routes::create_router(db, rabbit_channel);
 
     let port = env::var("PORT")
         .ok()

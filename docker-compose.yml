@@ -7,6 +7,7 @@ services:
       - "3000:3000"
     environment:
       - MONGODB_URI=mongodb://admin:admin@mongo:27017/admin
+      - RABBITMQ_URI=amqp://guest:guest@rabbitmq:5672/%2f
       - DATABASE_NAME=hogger
       - PORT=3000
       - BEARER_TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzZXJ2aWNlIjoiYXBpIiwicm9sZSI6ImFkbWluIiwiaXNzdWVkQnkiOiJ0b2tlbi1nZW5lcmF0b3IiLCJpYXQiOjE3NDUzNDc3MTN9.ttTOeBN7RPVOreIfJpt7elaePBNVPiYWMp234r8zglo
@@ -14,6 +15,21 @@ services:
       - hogger-net
     depends_on:
       - mongo
+      - rabbitmq
+
+  hogger-worker:
+    build: .
+    environment:
+      - MONGODB_URI=mongodb://admin:admin@mongo:27017/admin
+      - RABBITMQ_URI=amqp://guest:guest@rabbitmq:5672/%2f
+      - DATABASE_NAME=hogger
+      - PORT=3000
+      - BEARER_TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzZXJ2aWNlIjoiYXBpIiwicm9sZSI6ImFkbWluIiwiaXNzdWVkQnkiOiJ0b2tlbi1nZW5lcmF0b3IiLCJpYXQiOjE3NDUzNDc3MTN9.ttTOeBN7RPVOreIfJpt7elaePBNVPiYWMp234r8zglo
+    networks:
+      - hogger-net
+    depends_on:
+      - mongo
+      - rabbitmq
 
   mongo:
     image: mongo:6.0
@@ -26,7 +42,16 @@ services:
     volumes:
       - mongo_data:/data/db
     networks:
-    - hogger-net
+      - hogger-net
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"     # AMQP port for apps
+      - "15672:15672"   # RabbitMQ management UI (optional)
+    networks:
+      - hogger-net
+
 volumes:
   mongo_data:
 

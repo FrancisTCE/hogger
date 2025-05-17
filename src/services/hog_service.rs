@@ -5,20 +5,21 @@ use futures::StreamExt;
 use mongodb::{Collection, Database, bson::doc};
 use uuid::Uuid;
 use chrono::Utc;
-
+use lapin::{Channel, BasicProperties};
 
 
 pub struct HogService {
     collection: Collection<Hog>,
+    rabbit_channel: Channel,
 }
 
 impl HogService {
-    pub fn new(db: &Database) -> Self {
+    pub fn new(db: &Database, rabbit_channel: Channel) -> Self {
         let collection = db.collection::<Hog>("hog");
-        HogService { collection }
+        HogService { collection, rabbit_channel }
     }
 
-    pub async fn create_hog(&self, client_request:ClientRequest) -> mongodb::error::Result<Hog> {
+    pub async fn create_hog(&self, client_request:ClientRequest) -> anyhow::Result<Hog> {
         let uuid = Uuid::new_v4();
         let timestamp = Utc::now();
         
@@ -28,13 +29,21 @@ impl HogService {
             Some(timestamp),
             None,
         );
-        let insert_result = self.collection.insert_one(hog.clone()).await?;
-        let id = insert_result.inserted_id;
-        let mut hog = hog;
-        hog.id = match id {
-            mongodb::bson::Bson::ObjectId(oid) => Some(oid),
-            _ => None,
-        };
+        // Serialize hog to JSON string
+        let payload = serde_json::to_vec(&hog)?;
+
+        // Publish to RabbitMQ queue named "hog_queue" (change if needed)
+        self.rabbit_channel
+            .basic_publish(
+                "",             // exchange, "" = default direct exchange
+                "hog_queue",    // routing key = queue name
+                lapin::options::BasicPublishOptions::default(),
+                &payload,
+                BasicProperties::default(),
+            )
+            .await?
+            .await?; 
+        
         Ok(hog)
     }
 

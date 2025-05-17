@@ -3,9 +3,12 @@ use std::sync::Arc;
 
 use crate::{controllers::hog_controller, services::hog_service::HogService};
 use mongodb::Database;
+use lapin::Channel;
 
-pub fn create_router(db: Database) -> Router {
-    let hog_service = Arc::new(HogService::new(&db));
+type RabbitChannel = Channel; 
+
+pub fn create_router(db: Database, rabbit_channel: RabbitChannel) -> Router {
+    let hog_service = Arc::new(HogService::new(&db, rabbit_channel));
 
     Router::new()
         .route("/hogs", get(hog_controller::get_hogs))
