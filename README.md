@@ -95,6 +95,7 @@ Sample payload:
 GET : ::3000/hogs (get all hogs)
 
 Sample reply:
+```json
 [    
 {
         "log_timestamp": "2025-05-17T19:40:47.449Z",
@@ -148,15 +149,16 @@ Sample reply:
         }
     }
 ]
+```
 
 GET : ::3000/hogs/search (addss search fields by field on payload)
 
 Example:
-
+```json
 {
     "log_level": "DEBUG",
     "log_type": "system",
     "log_source": "data-ingestor"
 }
-
+```
 returns all system debug log from the data-ingestor
