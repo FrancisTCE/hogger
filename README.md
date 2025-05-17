@@ -128,4 +128,4 @@ Example:
     "log_source": "data-ingestor"
 }
 
-returns all system debug log levels for the data-ingestor
+returns all system debug log from the data-ingestor
