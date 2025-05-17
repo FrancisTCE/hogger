@@ -34,11 +34,13 @@ impl HogService {
         );
 
         let payload = serde_json::to_vec(&hog)?;
+        println!("📤 Publishing hog: {:?}", hog);
+        println!("📤 Publishing payload: {:?}", payload);
 
         self.rabbit_channel
             .basic_publish(
-                "",          // exchange, "" = default direct exchange
-                "hog_queue", // routing key = queue name
+                "",          
+                "hog_queue", 
                 lapin::options::BasicPublishOptions::default(),
                 &payload,
                 BasicProperties::default(),

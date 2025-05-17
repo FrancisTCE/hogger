@@ -19,6 +19,7 @@ services:
 
   hogger-worker:
     build: .
+    command: ./hogger-worker
     environment:
       - MONGODB_URI=mongodb://admin:admin@mongo:27017/admin
       - RABBITMQ_URI=amqp://guest:guest@rabbitmq:5672/%2f

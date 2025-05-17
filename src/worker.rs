@@ -1,13 +1,11 @@
-mod models;
 mod config;
+mod models;
 
 use futures::StreamExt;
 use lapin::{options::*, types::FieldTable};
+use models::hog::Hog;
 use mongodb::Collection;
 use serde_json;
-
-use crate::models::hog::Hog;
-
 
 #[tokio::main]
 async fn main() {
@@ -22,8 +20,11 @@ async fn main() {
 
     println!("🐇 Worker started, waiting for messages...");
     while let Some(delivery) = consumer.next().await {
+        println!("🐇 Received delivery: {:?}", delivery);
         if let Ok(delivery) = delivery {
+            println!("🐇 Received message: {:?}", delivery);
             let hog: Hog = serde_json::from_slice(&delivery.data).unwrap();
+            println!("Inserting hog into MongoDB: {:?}", hog);
             collection.insert_one(hog).await.unwrap();
             delivery.ack(BasicAckOptions::default()).await.unwrap();
         }
