@@ -1,8 +1,5 @@
-
-use serde::{Deserialize, Serialize};
 use mongodb::bson::{self, Document};
-
-
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OptionsRequest {
@@ -58,36 +55,51 @@ pub fn build_filter(options: &OptionsRequest) -> Document {
     }
     if options.log_timestamp_start.is_some() || options.log_timestamp_end.is_some() {
         let mut ts_filter = Document::new();
+
         if let Some(start) = options.log_timestamp_start {
-            ts_filter.insert("$gte", bson::DateTime::from_millis(start.timestamp_millis()));
+            // Convert chrono::DateTime<Utc> to ISO 8601 string
+            let start_str = start.to_rfc3339_opts(chrono::SecondsFormat::Millis, true);
+            ts_filter.insert("$gte", start_str);
         }
+
         if let Some(end) = options.log_timestamp_end {
-            ts_filter.insert("$lte", bson::DateTime::from_millis(end.timestamp_millis()));
+            let end_str = end.to_rfc3339_opts(chrono::SecondsFormat::Millis, true);
+            ts_filter.insert("$lte", end_str);
         }
+
         filter.insert("log_timestamp", ts_filter);
         println!("log_timestamp filter: {:?}", filter);
     } else if let Some(timestamp) = options.log_timestamp {
-        filter.insert("log_timestamp", bson::DateTime::from_millis(timestamp.timestamp_millis()));
+        let ts_str = timestamp.to_rfc3339_opts(chrono::SecondsFormat::Millis, true);
+        filter.insert("log_timestamp", ts_str);
     }
 
-
-    if options.hog_timestamp.is_some() || options.hog_timestamp_start.is_some() || options.hog_timestamp_end.is_some() {
+    if options.hog_timestamp.is_some()
+        || options.hog_timestamp_start.is_some()
+        || options.hog_timestamp_end.is_some()
+    {
         let mut hog_ts_filter = Document::new();
+
         if let Some(start) = options.hog_timestamp_start {
-            hog_ts_filter.insert("$gte", bson::DateTime::from_millis(start.timestamp_millis()));
+            // Convert to ISO 8601 string with milliseconds + Z
+            let start_str = start.to_rfc3339_opts(chrono::SecondsFormat::Millis, true);
+            hog_ts_filter.insert("$gte", start_str);
         }
+
         if let Some(end) = options.hog_timestamp_end {
-            hog_ts_filter.insert("$lte", bson::DateTime::from_millis(end.timestamp_millis()));
+            let end_str = end.to_rfc3339_opts(chrono::SecondsFormat::Millis, true);
+            hog_ts_filter.insert("$lte", end_str);
         }
+
         if !hog_ts_filter.is_empty() {
             filter.insert("hog_timestamp", hog_ts_filter);
         }
     }
 
-    if let Some(hog_ts) = options.hog_timestamp {
-        filter.insert("hog_timestamp", bson::DateTime::from_millis(hog_ts.timestamp_millis()));
+    if let Some(ref hog_timestamp) = options.hog_timestamp {
+        let ts_str = hog_timestamp.to_rfc3339_opts(chrono::SecondsFormat::Millis, true);
+        filter.insert("hog_timestamp", ts_str);
     }
 
     filter
 }
-

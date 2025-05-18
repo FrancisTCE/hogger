@@ -1,8 +1,7 @@
-use crate::models::client_request::{ClientRequest, ClientRequestWithDateTime};
+use crate::models::client_request::ClientRequest;
 use crate::models::hog::Hog;
 use crate::models::options::{self, OptionsRequest};
 use crate::utils::utils;
-use chrono::{DateTime, Utc};
 use futures::StreamExt;
 use lapin::{BasicProperties, Channel};
 use mongodb::{Collection, Database, bson::doc};
@@ -22,51 +21,34 @@ impl HogService {
         }
     }
 
-pub async fn create_hog(&self, client_request: ClientRequest) -> anyhow::Result<Hog> {
-    let uuid = Uuid::new_v4();
+    pub async fn create_hog(&self, client_request: ClientRequest) -> anyhow::Result<Hog> {
+        let uuid = Uuid::new_v4();
 
-    // Parse string to DateTime<Utc>
-    let parsed_log_timestamp: DateTime<Utc> = client_request
-        .log_timestamp
-        .parse()
-        .map_err(|e| anyhow::anyhow!("Failed to parse log_timestamp: {}", e))?;
+        let timestamp = utils::get_timestamp();
+        
+        let hog = Hog::new(
+            client_request,
+            Some(uuid.to_string()),
+            Some(timestamp),
+            None,
+        );
 
-    // Now create a new ClientRequest with the parsed DateTime instead of string
-    let client_request_with_dt = ClientRequestWithDateTime {
-        log_timestamp: parsed_log_timestamp,
-        log_level: client_request.log_level,
-        log_message: client_request.log_message,
-        log_data: client_request.log_data,
-        log_type: client_request.log_type,
-        log_source: client_request.log_source,
-        log_source_id: client_request.log_source_id,
-    };
+        let payload = serde_json::to_vec(&hog)?;
 
-    // Generate current timestamp for hog_timestamp
-    let timestamp = utils::get_timestamp();
+        self.rabbit_channel
+            .basic_publish(
+                "",
+                "hog_queue",
+                lapin::options::BasicPublishOptions::default(),
+                &payload,
+                BasicProperties::default(),
+            )
+            .await?
+            .await?;
 
-    let hog = Hog::new(
-        client_request_with_dt,
-        Some(uuid.to_string()),
-        Some(timestamp),
-        None,
-    );
+        Ok(hog)
+    }
 
-    let payload = serde_json::to_vec(&hog)?;
-
-    self.rabbit_channel
-        .basic_publish(
-            "",
-            "hog_queue",
-            lapin::options::BasicPublishOptions::default(),
-            &payload,
-            BasicProperties::default(),
-        )
-        .await?
-        .await?;
-
-    Ok(hog)
-}
     pub async fn get_hogs(&self) -> Result<Vec<Hog>, mongodb::error::Error> {
         let filter = doc! {};
         let mut cursor = self.collection.find(filter).await?;
