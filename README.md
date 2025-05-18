@@ -55,8 +55,6 @@ Sample payload:
     "log_type": "system",
     "log_source": "data-ingestor",
     "log_source_id": "4654",
-    "hog_uuid": "286fb5c4-d7c4-4c96-89b7-649f5b7d54eb",
-    "hog_timestamp": "2025-05-17T19:40:49.405234765Z"
 }
 ```
 
