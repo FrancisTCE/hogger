@@ -138,11 +138,10 @@ pub fn build_filter(options: &OptionsRequest) -> Document {
 
 #[allow(dead_code)]
 pub fn build_log_data_value_aggregation_pipeline(value: &serde_json::Value) -> Vec<Document> {
-    // Here we search all fields inside `log_data` for the given value
 
     let bson_value = match bson::to_bson(value) {
         Ok(v) => v,
-        Err(_) => return vec![], // or handle error properly
+        Err(_) => return vec![], 
     };
 
     vec![
