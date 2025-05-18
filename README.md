@@ -43,7 +43,7 @@ Mandatory fields:
 * log_timestamp
 * log_message
 
-Note: log_data accepts any JSON, so it's possible to store and parse through specific log data from the services natively (yet to implement).
+Note: log_data accepts any JSON, so it's possible to store and parse through specific log data from the services natively through key, value or both.
 
 Sample payload:
 ```json
