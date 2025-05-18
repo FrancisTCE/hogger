@@ -66,7 +66,7 @@ Sample payload:
 Sample reply:
 ```json
 [    
-{
+    {
         "log_timestamp": "2025-05-17T19:40:47.449Z",
         "log_level": "INFO",
         "log_message": "This is a test log message 829",
@@ -153,10 +153,15 @@ Examples:
 | log_level              | `"ERROR"`                                      | Match log level                                 |
 | log_message            | `"connection failed"`                          | Partial or full text match on log message       |
 | log_data               | `{ "user_id": 1234, "debug": true }`           | Nested JSON for structured query (if supported) |
+| log_data_field         | `"field_name_in_your_json"`                    | Nested JSON field query                         |
+| log_data               | `"filed_value_in_your_json`                    | Nested JSON value query (aggregate if no field) |
 | log_type               | `"application"`                                | Exact match on log type                         |
 | log_source             | `"auth-service"`                               | Exact match on log source                       |
 | log_source_id          | `"service-abc-42"`                             | Match on unique service/source ID               |
 | hog_uuid               | `"b2f98561-3d7d-4db8-b6ae-2b2b176d9c3e"`       | Match on enriched hog UUID                      |
+| hog_limit              | `10`                                           | Limits records returned                         |
+| hog_parcial            | `true`                                         | Parcial matches (default is false)              |
+
 
 
 ### Feel free to contribute, file issues, or just stare at the hog 🐗.
