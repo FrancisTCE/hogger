@@ -139,6 +139,18 @@ Examples:
 }
 ```
 
+### returns 2 records of Errors that were logged with timeout between 2 timestamps through a partial message query
+```json
+{
+    "log_level": "ERROR",
+    "log_timestamp_start": "2025-05-18T15:00:00.800Z", 
+    "log_timestamp_end": "2025-05-18T15:19:00.800Z", 
+    "log_message": "timeout",
+    "hog_partial": true,
+    "hog_limit": 2
+}
+```
+
 ## The rest? Just works.
 
 | Field                  | Sample Value                                   | Description                                      |
