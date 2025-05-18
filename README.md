@@ -9,11 +9,12 @@ It uses:
 - 🐇 **RabbitMQ** for decoupled and scalable message handling
 - 🍃 **MongoDB** for durable and flexible storage
 
+## 🚀 Its fast (print is just 1 Worker)  
+![Hogger Stressed](https://i.ibb.co/jvZsz4hw/Screenshot-2025-05-18-135635.png)
+
 ## ⚙️ Philosophy
 
 This project is **unopinionated**. That means if you're a grown-up, you're expected to make your own decisions about how you want to handle logs. Hogger doesn’t tell you how to live your life—it just keeps going hog.
-
-![Hogger Stressed](https://i.ibb.co/jvZsz4hw/Screenshot-2025-05-18-135635.png)
 
 ## 🚧 Work in Progress
 
@@ -25,10 +26,6 @@ Features are being added, improved, or completely refactored. Contributions are 
 - Enable horizontal scaling with RabbitMQ workers
 - Provide a blazing-fast backend powered by Rust
 - Leave design decisions to the user
-
-## 🚀 Getting Started
-
-Documentation coming soon. For now, check out the [Docker setup](./docker-compose.yml) and explore the source code.
 
 ## 🐽 Why "Hogger"?
 
