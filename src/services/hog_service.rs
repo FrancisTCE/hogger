@@ -72,19 +72,15 @@ impl HogService {
         let need_aggregation = options.log_data_value.is_some() && options.log_data_field.is_none();
 
         if need_aggregation && options.log_data_value.is_some() {
-            // Use aggregation pipeline
             let log_data_value = options.log_data_value.as_ref().expect("log_data_value must be Some");
-            let pipeline = build_log_data_value_aggregation_pipeline(log_data_value.as_ref().expect("log_data_value must be Some"));
-
-
+            let pipeline = build_log_data_value_aggregation_pipeline(log_data_value.as_ref().expect("log_data_value must be Some"), &options);
             let mut cursor = self.collection.aggregate(pipeline).await?;
-
             let mut hogs = Vec::new();
-
             while let Some(doc) = cursor.try_next().await? {
                 let hog: Hog = bson::from_document(doc)?;
                 hogs.push(hog);
             }
+
             return Ok(hogs);
         } else {
             let filter = options::build_filter(&options.clone());

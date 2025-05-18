@@ -23,7 +23,7 @@ pub struct OptionsRequest {
     pub log_uuid: Option<String>,
     pub hog_uuid: Option<String>,
     pub hog_limit: Option<i64>,
-    pub hog_parcial: Option<bool>, // TODO: Implement this, currently only partial on mensage
+    pub hog_partial: Option<bool>, // TODO: Implement this, currently only partial on mensage
     pub hog_case_sensitive: Option<bool>, // TODO: Implement this
 }
 
@@ -41,7 +41,7 @@ pub fn build_filter(options: &OptionsRequest) -> Document {
         filter.insert("log_source_id", log_source_id);
     }
     if let Some(ref log_message) = options.log_message {
-        if options.hog_parcial.unwrap_or(false) {
+        if options.hog_partial.unwrap_or(false) {
             filter.insert(
                 "log_message",
                 doc! {
@@ -137,19 +137,33 @@ pub fn build_filter(options: &OptionsRequest) -> Document {
 }
 
 #[allow(dead_code)]
-pub fn build_log_data_value_aggregation_pipeline(value: &serde_json::Value) -> Vec<Document> {
+pub fn build_log_data_value_aggregation_pipeline(
+    value: &serde_json::Value,
+    options: &OptionsRequest,
+) -> Vec<Document> {
+    println!(
+        "Building aggregation pipeline for log_data_value: {:?}",
+        value
+    );
 
     let bson_value = match bson::to_bson(value) {
         Ok(v) => v,
-        Err(_) => return vec![], 
+        Err(_) => return vec![], // Handle properly in production
     };
 
-    vec![
-        doc! { "$match": { "log_data": { "$exists": true } } },
+    println!("BSON value: {:?}", bson_value);
+
+    let mut pipeline = vec![
+        doc! {
+            "$match": {
+                "log_data": { "$exists": true },
+                "log_data": { "$type": "object" }
+            }
+        },
         doc! {
             "$project": {
                 "log_data": 1,
-                "log_timestamp": 1,
+                "_id": 1,
                 "log_level": 1,
                 "log_message": 1,
                 "log_type": 1,
@@ -157,7 +171,7 @@ pub fn build_log_data_value_aggregation_pipeline(value: &serde_json::Value) -> V
                 "log_source_id": 1,
                 "hog_uuid": 1,
                 "hog_timestamp": 1,
-                "_id": 1
+                "log_timestamp": 1
             }
         },
         doc! {
@@ -168,13 +182,28 @@ pub fn build_log_data_value_aggregation_pipeline(value: &serde_json::Value) -> V
                         {
                             "$map": {
                                 "input": { "$objectToArray": "$log_data" },
-                                "as": "pair",
-                                "in": "$$pair.v"
+                                "as": "entry",
+                                "in": { "$ifNull": ["$$entry.v", ""] }
                             }
                         }
                     ]
                 }
             }
         },
-    ]
+    ];
+
+    println!("Initial pipeline: {:?}", pipeline);
+
+    let mut new_options = options.clone();
+    new_options.log_data_value = None;
+    let extra_match = build_filter(&new_options);
+    println!("Extra match filter: {:?}", extra_match);
+
+    if !extra_match.is_empty() {
+        pipeline.push(doc! { "$match": extra_match });
+        println!("Pipeline after adding extra match: {:?}", pipeline);
+    }
+
+    println!("Final pipeline: {:?}", pipeline);
+    pipeline
 }
