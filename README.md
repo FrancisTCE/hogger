@@ -9,11 +9,12 @@ It uses:
 - 🐇 **RabbitMQ** for decoupled and scalable message handling
 - 🍃 **MongoDB** for durable and flexible storage
 
+## 🚀 K6 stress test  
+![Hogger Stressed](https://i.ibb.co/jvZsz4hw/Screenshot-2025-05-18-135635.png)
+
 ## ⚙️ Philosophy
 
 This project is **unopinionated**. That means if you're a grown-up, you're expected to make your own decisions about how you want to handle logs. Hogger doesn’t tell you how to live your life—it just keeps going hog.
-
-![Hogger Stressed](https://i.ibb.co/jvZsz4hw/Screenshot-2025-05-18-135635.png)
 
 ## 🚧 Work in Progress
 
@@ -25,10 +26,6 @@ Features are being added, improved, or completely refactored. Contributions are 
 - Enable horizontal scaling with RabbitMQ workers
 - Provide a blazing-fast backend powered by Rust
 - Leave design decisions to the user
-
-## 🚀 Getting Started
-
-Documentation coming soon. For now, check out the [Docker setup](./docker-compose.yml) and explore the source code.
 
 ## 🐽 Why "Hogger"?
 
@@ -43,23 +40,39 @@ Mandatory fields:
 * log_timestamp
 * log_message
 
-Note: log_data accepts any JSON, so it's possible to store and parse through specific log data from the services natively (yet to implement).
+Note: log_data accepts any JSON, so it's possible to store and parse through specific log data from the services natively through key, value or both.
 
 Sample payload:
 ```json
 {
-    "log_timestamp": "2025-05-17T19:40:49.367Z",
-    "log_level": "DEBUG",
-    "log_message": "This is a test log message 249",
+    "log_timestamp": "2025-05-18T15:28:34.549Z",
+    "log_level": "WARN",
+    "log_message": "This is a test log message 919",
     "log_data": {
-        "key": "value",
-        "number": 43.713470436225535
+        "header_id": "Authorization",
+        "header_value": "abc-def-asdaaaf"
     },
-    "log_type": "system",
-    "log_source": "data-ingestor",
-    "log_source_id": "4654",
-    "hog_uuid": "286fb5c4-d7c4-4c96-89b7-649f5b7d54eb",
-    "hog_timestamp": "2025-05-17T19:40:49.405234765Z"
+    "log_type": "security",
+    "log_source": "api-gateway",
+    "log_source_id": "435",
+}
+```
+
+Sample reply:
+```json
+{
+    "log_timestamp": "2025-05-18T15:28:34.549Z",
+    "log_level": "WARN",
+    "log_message": "This is a test log message 919",
+    "log_data": {
+        "header_id": "Authorization",
+        "header_value": "abc-def-asdaaaf"
+    },
+    "log_type": "security",
+    "log_source": "api-gateway",
+    "log_source_id": "435",
+    "hog_uuid": "de641d8c-9ded-419f-a9e3-ecc90de7afe2",
+    "hog_timestamp": "2025-05-18T15:28:34.587Z"
 }
 ```
 
@@ -122,7 +135,7 @@ Sample reply:
 ]
 ```
 
-## GET : ::3000/hogs/search (adds search fields by field on payload)
+## POST : ::3000/hogs/search (adds search fields by field on payload)
 
 Examples:
 ### returns all system debug log from the data-ingestor
@@ -139,6 +152,18 @@ Examples:
     "log_timestamp_start": "2025-05-18T02:40:44.100Z",
     "log_timestamp_end": "2025-05-18T03:40:44.100Z",
     "log_level": "INFO"
+}
+```
+
+### returns 2 records of Errors that were logged with timeout between 2 timestamps through a partial message query
+```json
+{
+    "log_level": "ERROR",
+    "log_timestamp_start": "2025-05-18T15:00:00.800Z", 
+    "log_timestamp_end": "2025-05-18T15:19:00.800Z", 
+    "log_message": "timeout",
+    "hog_partial": true,
+    "hog_limit": 2
 }
 ```
 
