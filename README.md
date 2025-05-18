@@ -156,7 +156,6 @@ Examples:
 | log_type               | `"application"`                                | Exact match on log type                         |
 | log_source             | `"auth-service"`                               | Exact match on log source                       |
 | log_source_id          | `"service-abc-42"`                             | Match on unique service/source ID               |
-| log_uuid               | `"c4eabcde-1234-5678-9abc-def012345678"`       | Match on original log UUID                      |
 | hog_uuid               | `"b2f98561-3d7d-4db8-b6ae-2b2b176d9c3e"`       | Match on enriched hog UUID                      |
 
 
