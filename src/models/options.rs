@@ -146,21 +146,23 @@ pub fn build_log_data_value_aggregation_pipeline(value: &serde_json::Value) -> V
     };
 
     vec![
-        doc! { 
-            "$match": { "log_data": { "$exists": true } }
-        },
-        doc! { 
-            "$project": { 
-                "log_data": 1, 
-                "_id": 1 
-            }
-        },
-        doc! { 
-            "$match": { 
-                "$expr": { 
-                    "$in": [bson_value, { "$objectToArray": "$log_data.v" }] 
-                }
+    doc! { "$match": { "log_data": { "$exists": true } } },
+    doc! { "$project": { "log_data": 1, "_id": 1 } },
+    doc! { 
+        "$match": {
+            "$expr": {
+                "$in": [
+                    bson_value,
+                    {
+                        "$map": {
+                            "input": { "$objectToArray": "$log_data" },
+                            "as": "pair",
+                            "in": "$$pair.v"
+                        }
+                    }
+                ]
             }
         }
-    ]
+    }
+]
 }
