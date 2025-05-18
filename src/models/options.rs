@@ -46,7 +46,7 @@ pub fn build_filter(options: &OptionsRequest) -> Document {
                 "log_message",
                 doc! {
                     "$regex": log_message,
-                    "$options": "i", 
+                    "$options": "i",
                 },
             );
         } else {
@@ -114,27 +114,53 @@ pub fn build_filter(options: &OptionsRequest) -> Document {
         }
     }
 
-    if let (Some(field), Some(value)) = (&options.log_data_field, &options.log_data_value) {
-        let key = format!("log_data.{}", field);
-        match bson::to_bson(value) {
-            Ok(bson_value) => {
-                filter.insert(key, bson_value);
-            }
-            Err(e) => {
-                eprintln!("Failed to convert log_data_value to BSON: {:?}", e);
-            }
-        }
-    } else if let Some(ref field) = options.log_data_field {
-        let key = format!("log_data.{}", field);
-        filter.insert(key, doc! { "$exists": true });
-    } else if let Some(ref _value) = options.log_data_value {
-        eprintln!("Warning: Cannot search for value in arbitrary keys unless schema is known.");
-    }
-
     if let Some(ref hog_timestamp) = options.hog_timestamp {
         let ts_str = hog_timestamp.to_rfc3339_opts(chrono::SecondsFormat::Millis, true);
         filter.insert("hog_timestamp", ts_str);
     }
 
+    if let Some(log_data_value) = &options.log_data_value {
+        if let Some(field) = &options.log_data_field {
+            let key = format!("log_data.{}", field);
+            if let Ok(bson_value) = bson::to_bson(log_data_value) {
+                filter.insert(key, bson_value);
+            }
+        } else {
+            //needs to run aggregations
+        }
+    } else if let Some(field) = &options.log_data_field {
+        let key = format!("log_data.{}", field);
+        filter.insert(key, doc! { "$exists": true });
+    }
+
     filter
+}
+
+#[allow(dead_code)]
+pub fn build_log_data_value_aggregation_pipeline(value: &serde_json::Value) -> Vec<Document> {
+    // Here we search all fields inside `log_data` for the given value
+
+    let bson_value = match bson::to_bson(value) {
+        Ok(v) => v,
+        Err(_) => return vec![], // or handle error properly
+    };
+
+    vec![
+        doc! { 
+            "$match": { "log_data": { "$exists": true } }
+        },
+        doc! { 
+            "$project": { 
+                "log_data": 1, 
+                "_id": 1 
+            }
+        },
+        doc! { 
+            "$match": { 
+                "$expr": { 
+                    "$in": [bson_value, { "$objectToArray": "$log_data.v" }] 
+                }
+            }
+        }
+    ]
 }
