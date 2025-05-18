@@ -9,7 +9,7 @@ It uses:
 - 🐇 **RabbitMQ** for decoupled and scalable message handling
 - 🍃 **MongoDB** for durable and flexible storage
 
-## 🚀 Its fast (print is just 1 Worker)  
+## 🚀 K6 stress test  
 ![Hogger Stressed](https://i.ibb.co/jvZsz4hw/Screenshot-2025-05-18-135635.png)
 
 ## ⚙️ Philosophy
