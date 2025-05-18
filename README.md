@@ -154,7 +154,7 @@ Examples:
 | log_message            | `"connection failed"`                          | Partial or full text match on log message       |
 | log_data               | `{ "user_id": 1234, "debug": true }`           | Nested JSON for structured query (if supported) |
 | log_data_field         | `"field_name_in_your_json"`                    | Nested JSON field query                         |
-| log_data               | `"filed_value_in_your_json`                    | Nested JSON value query (aggregate if no field) |
+| log_data_value         | `"filed_value_in_your_json`                    | Nested JSON value query (aggregate if no field) |
 | log_type               | `"application"`                                | Exact match on log type                         |
 | log_source             | `"auth-service"`                               | Exact match on log source                       |
 | log_source_id          | `"service-abc-42"`                             | Match on unique service/source ID               |
