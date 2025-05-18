@@ -2,8 +2,6 @@
 
 ![Hogger Logo](https://i.ibb.co/6cJdq8GD/hogger.jpg)
 
-![Hogger_Stressed](https://i.ibb.co/jvZsz4hw/Screenshot-2025-05-18-135635.png)
-
 **Hogger** is an open-source log (or rather, *hog*) aggregator, built in Rust for performance crackheads who want maximum throughput with minimal BS. Currently being used to process stock/crypto scraper data logs in my homelab.
 
 It uses:
@@ -14,6 +12,8 @@ It uses:
 ## ⚙️ Philosophy
 
 This project is **unopinionated**. That means if you're a grown-up, you're expected to make your own decisions about how you want to handle logs. Hogger doesn’t tell you how to live your life—it just keeps going hog.
+
+![Hogger Stressed](https://i.ibb.co/jvZsz4hw/Screenshot-2025-05-18-135635.png)
 
 ## 🚧 Work in Progress
 
