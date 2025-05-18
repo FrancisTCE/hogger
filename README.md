@@ -122,7 +122,7 @@ Sample reply:
 ]
 ```
 
-## GET : ::3000/hogs/search (adds search fields by field on payload)
+## POST : ::3000/hogs/search (adds search fields by field on payload)
 
 Examples:
 ### returns all system debug log from the data-ingestor
