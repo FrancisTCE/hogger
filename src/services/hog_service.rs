@@ -69,7 +69,8 @@ impl HogService {
         options: OptionsRequest,
     ) -> Result<Vec<Hog>, mongodb::error::Error> {
         let filter = options::build_filter(&options.clone());
-        let mut cursor = self.collection.find(filter).with_options(None).await?;
+        let limit = options.hog_limit.unwrap_or(1000);
+        let mut cursor = self.collection.find(filter).limit(limit).with_options(None).await?;
         let mut hogs = Vec::new();
 
         while let Some(result) = cursor.next().await {
