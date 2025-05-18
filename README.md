@@ -134,5 +134,23 @@ returns all system debug log from the data-ingestor
 
 ## The rest? Just works.
 
+| Field                  | Sample Value                                   | Description                                      |
+|------------------------|------------------------------------------------|--------------------------------------------------|
+| log_timestamp          | `"2025-05-18T12:30:00.000Z"`                   | Exact match on log timestamp                    |
+| log_timestamp_start    | `"2025-05-18T00:00:00.000Z"`                   | Start range for log timestamp                   |
+| log_timestamp_end      | `"2025-05-18T23:59:59.999Z"`                   | End range for log timestamp                     |
+| hog_timestamp          | `"2025-05-18T13:45:00.000Z"`                   | Exact match on hog timestamp                    |
+| hog_timestamp_start    | `"2025-05-17T00:00:00.000Z"`                   | Start range for hog timestamp                   |
+| hog_timestamp_end      | `"2025-05-18T23:59:59.999Z"`                   | End range for hog timestamp                     |
+| log_level              | `"ERROR"`                                      | Match log level                                 |
+| log_message            | `"connection failed"`                          | Partial or full text match on log message       |
+| log_data               | `{ "user_id": 1234, "debug": true }`           | Nested JSON for structured query (if supported) |
+| log_type               | `"application"`                                | Exact match on log type                         |
+| log_source             | `"auth-service"`                               | Exact match on log source                       |
+| log_source_id          | `"service-abc-42"`                             | Match on unique service/source ID               |
+| log_uuid               | `"c4eabcde-1234-5678-9abc-def012345678"`       | Match on original log UUID                      |
+| hog_uuid               | `"b2f98561-3d7d-4db8-b6ae-2b2b176d9c3e"`       | Match on enriched hog UUID                      |
+
+
 ### Feel free to contribute, file issues, or just stare at the hog 🐗.
 
