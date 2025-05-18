@@ -120,9 +120,10 @@ Sample reply:
 ]
 ```
 
-## GET : ::3000/hogs/search (addss search fields by field on payload)
+## GET : ::3000/hogs/search (adds search fields by field on payload)
 
-Example:
+Examples:
+### returns all system debug log from the data-ingestor
 ```json
 {
     "log_level": "DEBUG",
@@ -130,7 +131,14 @@ Example:
     "log_source": "data-ingestor"
 }
 ```
-returns all system debug log from the data-ingestor
+### returns all INFO logs in a specific time range
+```json
+{
+    "log_timestamp_start": "2025-05-18T02:40:44.100Z",
+    "log_timestamp_end": "2025-05-18T03:40:44.100Z",
+    "log_level": "INFO"
+}
+```
 
 ## The rest? Just works.
 
