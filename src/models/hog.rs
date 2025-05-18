@@ -2,7 +2,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use mongodb::bson::oid::ObjectId;
 
-use super::client_request::{ClientRequest, ClientRequestWithDateTime};
+use super::client_request::ClientRequest;
 
  
 #[derive(Debug, Clone, Serialize, Deserialize)]
