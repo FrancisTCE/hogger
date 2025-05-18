@@ -18,11 +18,8 @@ async fn main() {
     let db = config::init_db().await.expect("Failed to connect to MongoDB");
     let collection: Collection<Hog> = db.collection("hog");
 
-    println!("🐇 Worker started, waiting for messages...");
     while let Some(delivery) = consumer.next().await {
-        println!("🐇 Received delivery: {:?}", delivery);
         if let Ok(delivery) = delivery {
-            println!("🐇 Received message: {:?}", delivery);
             let hog: Hog = serde_json::from_slice(&delivery.data).unwrap();
             println!("Inserting hog into MongoDB: {:?}", hog);
             collection.insert_one(hog).await.unwrap();

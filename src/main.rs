@@ -3,6 +3,7 @@ mod models;
 mod services;
 mod controllers;
 mod routes;
+mod utils;
 
 use dotenv::dotenv;
 use std::{env, net::SocketAddr};

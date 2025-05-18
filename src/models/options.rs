@@ -65,11 +65,11 @@ pub fn build_filter(options: &OptionsRequest) -> Document {
             ts_filter.insert("$lte", bson::DateTime::from_millis(end.timestamp_millis()));
         }
         filter.insert("log_timestamp", ts_filter);
-    }
-
-    if let Some(timestamp) = options.log_timestamp {
+        println!("log_timestamp filter: {:?}", filter);
+    } else if let Some(timestamp) = options.log_timestamp {
         filter.insert("log_timestamp", bson::DateTime::from_millis(timestamp.timestamp_millis()));
     }
+
 
     if options.hog_timestamp.is_some() || options.hog_timestamp_start.is_some() || options.hog_timestamp_end.is_some() {
         let mut hog_ts_filter = Document::new();
@@ -90,3 +90,4 @@ pub fn build_filter(options: &OptionsRequest) -> Document {
 
     filter
 }
+

@@ -1,14 +1,16 @@
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use crate::models::client_request::ClientRequest;
 use mongodb::bson::oid::ObjectId;
+
+use super::client_request::ClientRequestWithDateTime;
 
  
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Hog {
     #[serde(flatten)]
-    pub client_request: ClientRequest,
+    pub client_request: ClientRequestWithDateTime,
     pub hog_uuid: Option<String>,
-    pub hog_timestamp: Option<chrono::DateTime<chrono::Utc>>,
+    pub hog_timestamp: Option<DateTime<Utc>>,
     #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
     pub id: Option<ObjectId>,
 }
@@ -16,9 +18,9 @@ pub struct Hog {
 #[allow(dead_code)]
 impl Hog {
     pub fn new(
-        client_request: ClientRequest,
+        client_request: ClientRequestWithDateTime,
         hog_uuid: Option<String>,
-        hog_timestamp: Option<chrono::DateTime<chrono::Utc>>,
+        hog_timestamp: Option<DateTime<Utc>>,
         id: Option<ObjectId>,
     ) -> Self {
         Hog {
