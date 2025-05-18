@@ -45,16 +45,34 @@ Note: log_data accepts any JSON, so it's possible to store and parse through spe
 Sample payload:
 ```json
 {
-    "log_timestamp": "2025-05-17T19:40:49.367Z",
-    "log_level": "DEBUG",
-    "log_message": "This is a test log message 249",
+    "log_timestamp": "2025-05-18T15:28:34.549Z",
+    "log_level": "WARN",
+    "log_message": "This is a test log message 919",
     "log_data": {
-        "key": "value",
-        "number": 43.713470436225535
+        "header_id": "Authorization",
+        "header_value": "abc-def-asdaaaf"
     },
-    "log_type": "system",
-    "log_source": "data-ingestor",
-    "log_source_id": "4654",
+    "log_type": "security",
+    "log_source": "api-gateway",
+    "log_source_id": "435",
+}
+```
+
+Sample reply:
+```json
+{
+    "log_timestamp": "2025-05-18T15:28:34.549Z",
+    "log_level": "WARN",
+    "log_message": "This is a test log message 919",
+    "log_data": {
+        "header_id": "Authorization",
+        "header_value": "abc-def-asdaaaf"
+    },
+    "log_type": "security",
+    "log_source": "api-gateway",
+    "log_source_id": "435",
+    "hog_uuid": "de641d8c-9ded-419f-a9e3-ecc90de7afe2",
+    "hog_timestamp": "2025-05-18T15:28:34.587Z"
 }
 ```
 
