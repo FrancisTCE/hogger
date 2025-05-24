@@ -13,6 +13,7 @@ pub fn create_router(db: Database, rabbit_channel: RabbitChannel) -> Router {
     Router::new()
         .route("/hogs", get(hog_controller::get_hogs))
         .route("/hogs", post(hog_controller::create_hog))
+        .route("/hogs/statistics", get(hog_controller::hog_statistics))
         .route("/hogs/search", post(hog_controller::handle_search))
         .layer(Extension(hog_service))
 }

@@ -16,10 +16,12 @@ services:
     depends_on:
       - mongo
       - rabbitmq
+    restart: on-failure
 
   hogger-worker:
     build: .
     command: ./hogger-worker
+    restart: on-failure
     environment:
       - MONGODB_URI=mongodb://admin:admin@mongo:27017/admin
       - RABBITMQ_URI=amqp://guest:guest@rabbitmq:5672/%2f
@@ -52,6 +54,7 @@ services:
       - "15672:15672"   
     networks:
       - hogger-net
+    restart: always
 
 volumes:
   mongo_data:

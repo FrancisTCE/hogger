@@ -20,11 +20,11 @@ pub struct OptionsRequest {
     pub log_type: Option<String>,
     pub log_source: Option<String>,
     pub log_source_id: Option<String>,
-    pub log_uuid: Option<String>,
     pub hog_uuid: Option<String>,
     pub hog_limit: Option<i64>,
     pub hog_partial: Option<bool>, // TODO: Implement this, currently only partial on mensage
     pub hog_case_sensitive: Option<bool>, // TODO: Implement this
+    pub hog_sort: Option<String>, // TODO: Implement this 
 }
 
 #[allow(dead_code)]
@@ -56,9 +56,7 @@ pub fn build_filter(options: &OptionsRequest) -> Document {
     if let Some(ref log_type) = options.log_type {
         filter.insert("log_type", log_type);
     }
-    if let Some(ref log_uuid) = options.log_uuid {
-        filter.insert("log_uuid", log_uuid);
-    }
+   
     if let Some(ref hog_uuid) = options.hog_uuid {
         filter.insert("hog_uuid", hog_uuid);
     }
@@ -141,17 +139,10 @@ pub fn build_log_data_value_aggregation_pipeline(
     value: &serde_json::Value,
     options: &OptionsRequest,
 ) -> Vec<Document> {
-    println!(
-        "Building aggregation pipeline for log_data_value: {:?}",
-        value
-    );
-
     let bson_value = match bson::to_bson(value) {
         Ok(v) => v,
         Err(_) => return vec![], // Handle properly in production
     };
-
-    println!("BSON value: {:?}", bson_value);
 
     let mut pipeline = vec![
         doc! {
@@ -192,18 +183,13 @@ pub fn build_log_data_value_aggregation_pipeline(
         },
     ];
 
-    println!("Initial pipeline: {:?}", pipeline);
-
     let mut new_options = options.clone();
     new_options.log_data_value = None;
     let extra_match = build_filter(&new_options);
-    println!("Extra match filter: {:?}", extra_match);
 
     if !extra_match.is_empty() {
         pipeline.push(doc! { "$match": extra_match });
-        println!("Pipeline after adding extra match: {:?}", pipeline);
     }
 
-    println!("Final pipeline: {:?}", pipeline);
     pipeline
 }
