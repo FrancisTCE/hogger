@@ -15,5 +15,6 @@ pub fn create_router(db: Database, rabbit_channel: RabbitChannel) -> Router {
         .route("/hogs", post(hog_controller::create_hog))
         .route("/hogs/statistics", get(hog_controller::hog_statistics))
         .route("/hogs/search", post(hog_controller::handle_search))
+        .route("/hogs/advancecdsearch", post(hog_controller::handle_advanced_search))
         .layer(Extension(hog_service))
 }

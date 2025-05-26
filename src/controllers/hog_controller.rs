@@ -43,6 +43,20 @@ pub async fn handle_search(
     }
 }
 
+pub async fn handle_advanced_search(
+    Extension(hog_service): Extension<Arc<HogService>>,
+    Json(options): Json<OptionsRequest>,
+) -> impl IntoResponse {
+
+    match hog_service.search_hogs(options).await {
+        Ok(hogs) => Json(hogs).into_response(),
+        Err(err) => {
+            let error_message = format!("Failed to fetch hogs: {}", err);
+            (StatusCode::INTERNAL_SERVER_ERROR, error_message).into_response()
+        }
+    }
+}
+
 pub async fn hog_statistics(
     Extension(hog_service): Extension<Arc<HogService>>
 ) -> impl IntoResponse {
