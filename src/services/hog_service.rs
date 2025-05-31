@@ -1,5 +1,7 @@
+use crate::errors::SomeCreateError;
 use crate::models::client_request::ClientRequest;
 use crate::models::hog::Hog;
+use crate::models::hog_client_schema::HogRequest;
 use crate::models::options::{self, OptionsRequest, build_log_data_value_aggregation_pipeline};
 use crate::models::statistics::HogStatistics;
 use crate::utils::utils;
@@ -51,6 +53,46 @@ impl HogService {
 
         Ok(hog)
     }
+
+    pub async fn create_hog_validated(&self, req: HogRequest) -> Result<Hog, SomeCreateError> {
+    let uuid = Uuid::new_v4();
+    let timestamp = utils::get_timestamp();
+
+    let client_request = ClientRequest {
+        log_timestamp: req.log_timestamp,
+        log_level: req.log_level,
+        log_message: req.log_message,
+        log_data: req.log_data,
+        log_type: req.log_type,
+        log_source: req.log_source,
+        log_source_id: req.log_source_id,
+    };
+
+    let hog = Hog::new(
+        client_request,
+        Some(uuid.to_string()),
+        Some(timestamp),
+        None,
+    );
+
+    let payload = serde_json::to_vec(&hog).map_err(|e| SomeCreateError::new(e.to_string()))?;
+
+    self.rabbit_channel
+        .basic_publish(
+            "",
+            "hog_queue",
+            lapin::options::BasicPublishOptions::default(),
+            &payload,
+            BasicProperties::default(),
+        )
+        .await
+        .map_err(|e| SomeCreateError::new(e.to_string()))?
+        .await
+        .map_err(|e| SomeCreateError::new(e.to_string()))?;
+
+    Ok(hog)
+}
+    
 
     pub async fn get_hogs(&self) -> Result<Vec<Hog>, mongodb::error::Error> {
         let filter = doc! {};

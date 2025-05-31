@@ -4,3 +4,4 @@ pub mod options;
 pub mod advanced_options_request;
 pub mod advanced_options_response;
 pub mod statistics;
+pub mod hog_client_schema;

@@ -1,5 +1,5 @@
 use bson::doc;
-use mongodb::bson::{self, Document};
+use mongodb::bson::{self};
 use serde::{Deserialize, Serialize};
 
 use super::options::OptionsRequest;
@@ -11,7 +11,14 @@ pub enum SortType {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct FieldOptions {
+pub struct AdvancedCallbackOptions {
+    pub webhook: Option<String>,
+    pub headers: Option<bson::Document>,
+    pub method: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AdvancedFieldOptions {
     pub field: Option<String>,
     pub value: Option<serde_json::Value>,
     pub limit: Option<i64>,
@@ -23,6 +30,6 @@ pub struct FieldOptions {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AdvancedOptionsRequest {
     pub pagination_token: Option<String>,
-    pub advanced_options: Option<Vec<FieldOptions>>,
+    pub advanced_options: Option<Vec<AdvancedFieldOptions>>,
     pub simple_options: Option<OptionsRequest>
 }
