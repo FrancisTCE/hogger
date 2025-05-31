@@ -2,6 +2,8 @@ use bson::doc;
 use mongodb::bson::{self, Document};
 use serde::{Deserialize, Serialize};
 
+use super::options::OptionsRequest;
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum SortType {
     Ascending,
@@ -21,5 +23,6 @@ pub struct FieldOptions {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AdvancedOptionsRequest {
     pub pagination_token: Option<String>,
-    pub filters: Option<Vec<FieldOptions>>,
+    pub advanced_options: Option<Vec<FieldOptions>>,
+    pub simple_options: Option<OptionsRequest>
 }
