@@ -4,10 +4,7 @@
 
 **Hogger** is an open-source log (or rather, *hog*) aggregator, built in Rust for performance crackheads who want maximum throughput with minimal BS. Currently being used to process stock/crypto scraper data logs in my homelab.
 
-It uses:
-- 🦀 **Rust** for blazingly fast stuff
-- 🐇 **RabbitMQ** for decoupled and scalable message handling
-- 🍃 **MongoDB** for durable and flexible storage
+It uses: Rust RabbitMQ MongoDb
 
 ## 🚀 K6 stress test  
 ![Hogger Stressed](https://i.ibb.co/jvZsz4hw/Screenshot-2025-05-18-135635.png)
