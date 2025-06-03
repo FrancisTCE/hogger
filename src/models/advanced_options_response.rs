@@ -1,5 +1,4 @@
 use bson::doc;
-use mongodb::bson::{self, Document};
 use serde::{Deserialize, Serialize};
 
 use super::hog::Hog;

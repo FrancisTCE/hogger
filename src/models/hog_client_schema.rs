@@ -35,6 +35,7 @@ pub struct ErrorResponse {
     pub errors: Vec<ApiErrorSchema>,
 }
 
+#[allow(dead_code)]
 pub async fn validate(req: serde_json::Value) -> Result<HogRequest, ErrorResponse> {
 
     let mut errors = Vec::new();

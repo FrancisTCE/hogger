@@ -8,8 +8,6 @@ use axum::extract::rejection::JsonRejection;
 
 use std::error::Error;
 
-
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ErrorResponse {
     pub status: StatusInfo,
@@ -68,32 +66,31 @@ impl Error for SomeCreateError {}
 pub enum ApiError {
     BadRequest {
         message: String,
-        fields: Vec<ApiErrorField>,
+        fields: Option<Vec<ApiErrorField>>,
     },
     Unauthorized {
         message: String,
-        fields: Vec<ApiErrorField>,
+        fields: Option<Vec<ApiErrorField>>,
     },
     Forbidden {
         message: String,
-        fields: Vec<ApiErrorField>,
+        fields: Option<Vec<ApiErrorField>>,
     },
     NotFound {
         message: String,
-        fields: Vec<ApiErrorField>,
+        fields: Option<Vec<ApiErrorField>>,
     },
     InternalServerError {
         message: String,
-        fields: Vec<ApiErrorField>,
+        fields: Option<Vec<ApiErrorField>>,
     },
     Other {
         status_code: u16,
         message: String,
-        fields: Vec<ApiErrorField>,
+        fields: Option<Vec<ApiErrorField>>,
     },
 }
 
-// Converts ApiError to an HTTP response
 impl IntoResponse for ApiError {
     fn into_response(self) -> Response {
         let status = StatusInfo {
@@ -103,7 +100,7 @@ impl IntoResponse for ApiError {
 
         let body = ErrorResponse {
             status,
-            errors: self.fields().clone(),
+            errors: self.fields().clone().unwrap_or_default(),
         };
 
         (self.status_code(), Json(body)).into_response()
@@ -135,7 +132,7 @@ impl ApiError {
         }
     }
 
-    pub fn fields(&self) -> &Vec<ApiErrorField> {
+    pub fn fields(&self) -> &Option<Vec<ApiErrorField>> {
         match self {
             ApiError::BadRequest { fields, .. }
             | ApiError::Unauthorized { fields, .. }
@@ -152,10 +149,10 @@ macro_rules! api_error {
     ($variant:ident, $msg:expr, $field:expr, $field_msg:expr) => {
         ApiError::$variant {
             message: $msg.to_string(),
-            fields: vec![ApiErrorField {
+            fields: Some(vec![ApiErrorField {
                 field: $field.to_string(),
                 message: $field_msg.to_string(),
-            }],
+            }]),
         }
     };
 }
@@ -180,11 +177,11 @@ impl From<ValidationError> for ApiError {
                 field: e.field,
                 message: e.message,
             })
-            .collect();
+            .collect::<Vec<_>>();
 
         ApiError::BadRequest {
             message: "Validation error".to_string(),
-            fields,
+            fields: Some(fields),
         }
     }
 }
@@ -193,10 +190,11 @@ impl From<SomeCreateError> for ApiError {
     fn from(err: SomeCreateError) -> Self {
         ApiError::InternalServerError {
             message: "Failed to create hog".to_string(),
-            fields: vec![ApiErrorField {
+            fields: Some(vec![ApiErrorField {
                 field: "trace".to_string(),
                 message: err.root_cause().to_string(),
-            }],
+            }]),
         }
     }
 }
+
