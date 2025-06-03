@@ -20,6 +20,8 @@ pub struct AdvancedCallbackOptions {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AdvancedFieldOptions {
     pub field: Option<String>,
+    pub contains_fields: Option<Vec<String>>,
+    pub contains_values: Option<Vec<String>>,
     pub value: Option<serde_json::Value>,
     pub limit: Option<i64>,
     pub partial: Option<bool>,

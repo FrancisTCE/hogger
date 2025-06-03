@@ -3,13 +3,25 @@ use mongodb::bson::{self, Document};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum SortType {
+    Ascending,
+    Descending,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum Value {
+    None,
+    Null,
+    Bool(bool),
+    Number(i32),
+    String(String),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OptionsRequest {
     pub log_timestamp: Option<chrono::DateTime<chrono::Utc>>,
     pub log_timestamp_start: Option<chrono::DateTime<chrono::Utc>>,
     pub log_timestamp_end: Option<chrono::DateTime<chrono::Utc>>,
-    pub hog_timestamp: Option<chrono::DateTime<chrono::Utc>>,
-    pub hog_timestamp_start: Option<chrono::DateTime<chrono::Utc>>,
-    pub hog_timestamp_end: Option<chrono::DateTime<chrono::Utc>>,
     pub log_level: Option<String>,
     pub log_message: Option<String>,
     pub log_data: Option<serde_json::Value>,
@@ -24,7 +36,13 @@ pub struct OptionsRequest {
     pub hog_limit: Option<i64>,
     pub hog_partial: Option<bool>, // TODO: Implement this, currently only partial on mensage
     pub hog_case_sensitive: Option<bool>, // TODO: Implement this
-    pub hog_sort: Option<String>, // TODO: Implement this 
+    pub hog_sort: Option<SortType>, // TODO: Implement this 
+    pub hog_sort_field: Option<String>, // TODO: Implement this
+    pub hog_fields: Option<Vec<String>>, // TODO: Implement this
+    pub hog_values: Option<Vec<Option<Value>>>, // TODO: Implement this
+    pub hog_timestamp: Option<chrono::DateTime<chrono::Utc>>,
+    pub hog_timestamp_start: Option<chrono::DateTime<chrono::Utc>>,
+    pub hog_timestamp_end: Option<chrono::DateTime<chrono::Utc>>,
 }
 
 #[allow(dead_code)]
