@@ -14,7 +14,7 @@ pub async fn init_db() -> mongodb::error::Result<Database> {
 pub async fn init_rabbitmq() -> lapin::Result<Channel> {
     let uri = env::var("RABBITMQ_URI").expect("RABBITMQ_URI must be set");
 
-    let max_retries = 10;
+    let max_retries = 15;
     let delay = Duration::from_secs(3);
 
     for attempt in 1..=max_retries {
