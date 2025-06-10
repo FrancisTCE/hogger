@@ -34,6 +34,22 @@ services:
       - mongo
       - rabbitmq
 
+  hogger-bulk-worker:
+    build: .
+    command: ./hogger-bulk-worker
+    restart: on-failure
+    environment:
+      - MONGODB_URI=mongodb://admin:admin@mongo:27017/admin
+      - RABBITMQ_URI=amqp://guest:guest@rabbitmq:5672/%2f
+      - DATABASE_NAME=hogger
+      - PORT=3000
+      - BEARER_TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzZXJ2aWNlIjoiYXBpIiwicm9sZSI6ImFkbWluIiwiaXNzdWVkQnkiOiJ0b2tlbi1nZW5lcmF0b3IiLCJpYXQiOjE3NDUzNDc3MTN9.ttTOeBN7RPVOreIfJpt7elaePBNVPiYWMp234r8zglo
+    networks:
+      - hogger-net
+    depends_on:
+      - mongo
+      - rabbitmq
+
   mongo:
     image: mongo:6.0
     restart: always

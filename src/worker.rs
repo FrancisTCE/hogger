@@ -18,6 +18,11 @@ async fn main() {
         .expect("Failed to connect to RabbitMQ");
 
     channel
+        .basic_qos(1, BasicQosOptions::default())
+        .await
+        .expect("Failed to set QoS");
+
+    channel
         .queue_declare(
             "hog_queue",
             QueueDeclareOptions::default(),
@@ -29,7 +34,7 @@ async fn main() {
     let mut consumer = channel
         .basic_consume(
             "hog_queue",
-            "hog_worker",
+            "hog_worker_single",
             BasicConsumeOptions::default(),
             FieldTable::default(),
         )

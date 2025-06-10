@@ -11,6 +11,10 @@ path = "src/main.rs"
 name = "hogger-worker"
 path = "src/worker.rs"
 
+[[bin]]
+name = "hogger-bulk-worker"
+path = "src/bulk-worker.rs"
+
 [dependencies]
 axum = "0.8.4"
 serde = { version = "1", features = ["derive"] }

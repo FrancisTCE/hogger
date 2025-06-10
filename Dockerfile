@@ -17,6 +17,7 @@ WORKDIR /usr/src/hogger
 # Correct paths
 COPY --from=builder /usr/src/hogger/target/release/hogger ./hogger
 COPY --from=builder /usr/src/hogger/target/release/hogger-worker ./hogger-worker
+COPY --from=builder /usr/src/hogger/target/release/hogger-bulk-worker ./hogger-bulk-worker
 
 # Expose the default port for the API
 EXPOSE 3000
