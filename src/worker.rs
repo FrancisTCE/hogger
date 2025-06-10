@@ -44,6 +44,13 @@ async fn main() {
     let db = config::init_db()
         .await
         .expect("Failed to connect to MongoDB");
+
+    config::init_db_indexes(&db)
+        .await
+        .expect("Failed to initialize MongoDB indexes");
+
+    println!("✅ Connected to MongoDB and initialized indexes");
+
     let collection: Collection<Hog> = db.collection("hog");
     let limiter = RateLimiter::direct(Quota::per_second(NonZeroU32::new(400).unwrap()));
 
@@ -60,6 +67,8 @@ async fn main() {
             }
         }
     }
+    eprintln!("Consumer stream ended, exiting with error code 1...");
+    std::process::exit(1);
 }
 
 async fn process_message(collection: &Collection<Hog>, delivery: Delivery) -> anyhow::Result<()> {
@@ -81,6 +90,7 @@ async fn process_message(collection: &Collection<Hog>, delivery: Delivery) -> an
                     sleep(Duration::from_millis(500 * attempt as u64)).await;
                 }
             }
+            
         }
     }
 

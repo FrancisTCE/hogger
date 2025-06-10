@@ -1,3 +1,4 @@
+use bson::doc;
 use mongodb::{options::ClientOptions, Client, Database};
 use lapin::{Connection, ConnectionProperties, Channel};
 use tokio::time::sleep;
@@ -9,6 +10,22 @@ pub async fn init_db() -> mongodb::error::Result<Database> {
     let client_options = ClientOptions::parse(&uri).await?;
     let client = Client::with_options(client_options)?;
     Ok(client.database(&db_name))
+}
+
+pub async fn init_db_indexes(db: &Database) -> mongodb::error::Result<()> {
+    let collection = db.collection::<serde_json::Value>("hog");
+    use mongodb::IndexModel;
+
+    let indexes = vec![
+        IndexModel::builder().keys(doc! { "hog_uuid": 1 }).build(),
+        IndexModel::builder().keys(doc! { "hog_timestamp": -1 }).build(),
+        IndexModel::builder().keys(doc! { "log_timestamp": -1 }).build(),
+        IndexModel::builder().keys(doc! { "log_type": 1 }).build(),
+        IndexModel::builder().keys(doc! { "log_source": 1, "log_timestamp": -1 }).build(),
+    ];
+
+    collection.create_indexes(indexes).await?;
+    Ok(())
 }
 
 pub async fn init_rabbitmq() -> lapin::Result<Channel> {

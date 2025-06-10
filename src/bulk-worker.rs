@@ -49,6 +49,12 @@ async fn main() {
         .await
         .expect("Failed to connect to MongoDB");
 
+    config::init_db_indexes(&db)
+        .await
+        .expect("Failed to initialize MongoDB indexes");
+
+    println!("✅ Connected to MongoDB and initialized indexes");
+
     let collection: Collection<Hog> = db.collection("hog");
     let limiter = RateLimiter::direct(Quota::per_second(NonZeroU32::new(400).unwrap()));
 
@@ -59,54 +65,50 @@ async fn main() {
     let mut flush_interval = interval(Duration::from_secs(TIMING_THRESHOLD_SECS));
     loop {
         tokio::select! {
-            delivery_result = consumer.next() => {
-                match delivery_result {
-                    Some(Ok(delivery)) => {
-                        match serde_json::from_slice::<Hog>(&delivery.data) {
-                            Ok(hog) => {
-                                bulk_order.push(hog);
-                                bulk_acks.push(delivery);
+                delivery_result = consumer.next() => {
+                    match delivery_result {
+                        Some(Ok(delivery)) => {
+                            match serde_json::from_slice::<Hog>(&delivery.data) {
+                                Ok(hog) => {
+                                    bulk_order.push(hog);
+                                    bulk_acks.push(delivery);
+                                }
+                                Err(e) => {
+                                    eprintln!("Failed to deserialize Hog: {:?}", e);
+                                    continue;
+                                }
                             }
-                            Err(e) => {
-                                eprintln!("Failed to deserialize Hog: {:?}", e);
-                                continue;
+                            if bulk_order.len() >= BULK_SIZE {
+                                limiter.until_ready().await;
+                                if let Err(e) = process_message(&collection, &bulk_acks, &bulk_order).await {
+                                    eprintln!("Error processing message batch: {:?}", e);
+                                }
+                                bulk_acks.clear();
+                                bulk_order.clear();
+                                _timing_start = Instant::now();
                             }
                         }
-                        if bulk_order.len() >= BULK_SIZE {
-                            limiter.until_ready().await;
-                            if let Err(e) = process_message(&collection, &bulk_acks, &bulk_order).await {
-                                eprintln!("Error processing message batch: {:?}", e);
-                            }
-                            bulk_acks.clear();
-                            bulk_order.clear();
-                            _timing_start = Instant::now();
+                        Some(Err(e)) => {
+                            eprintln!("Failed to consume message: {:?}", e);
                         }
+                        None => {
+                            println!("Consumer stream ended, exiting...");
+                            std::process::exit(1);
+                        },
                     }
-                    Some(Err(e)) => {
-                        eprintln!("Failed to consume message: {:?}", e);
-                    }
-                    None => break,
                 }
-            }   
-            _ = flush_interval.tick() => {
-                if !bulk_order.is_empty() {
-                    limiter.until_ready().await;
-                    if let Err(e) = process_message(&collection, &bulk_acks, &bulk_order).await {
-                        eprintln!("Error processing message batch: {:?}", e);
+                _ = flush_interval.tick() => {
+                    if !bulk_order.is_empty() {
+                        limiter.until_ready().await;
+                        if let Err(e) = process_message(&collection, &bulk_acks, &bulk_order).await {
+                            eprintln!("Error processing message batch: {:?}", e);
+                        }
+                        bulk_acks.clear();
+                        bulk_order.clear();
+                        _timing_start = Instant::now();
                     }
-                    bulk_acks.clear();
-                    bulk_order.clear();
-                    _timing_start = Instant::now();
                 }
             }
-        }
-    }
-
-    if !bulk_order.is_empty() {
-        limiter.until_ready().await;
-        if let Err(e) = process_message(&collection, &bulk_acks, &bulk_order).await {
-            eprintln!("Error processing final message batch: {:?}", e);
-        }
     }
 }
 
