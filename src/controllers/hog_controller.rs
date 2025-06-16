@@ -1,5 +1,5 @@
 use axum::extract::rejection::JsonRejection;
-use axum::{Json, extract::Extension, http::StatusCode, response::IntoResponse};
+use axum::{extract::Extension, http::StatusCode, response::IntoResponse, Json};
 
 use serde_json::Value;
 use std::sync::Arc;
@@ -22,22 +22,8 @@ pub async fn get_hogs(Extension(hog_service): Extension<Arc<HogService>>) -> imp
 
 pub async fn create_hog(
     Extension(hog_service): Extension<Arc<HogService>>,
-    Json(client_request): Json<ClientRequest>,
-) -> impl IntoResponse {
-    match hog_service.create_hog(client_request).await {
-        Ok(hog) => Json(hog).into_response(),
-        Err(err) => {
-            let error_message = format!("Failed to fetch hogs: {}", err);
-            (StatusCode::INTERNAL_SERVER_ERROR, error_message).into_response()
-        }
-    }
-}
-
-pub async fn create_hog_validated(
-    Extension(hog_service): Extension<Arc<HogService>>,
     payload: Result<Json<Value>, JsonRejection>,
 ) -> impl IntoResponse {
-
     let payload = match payload {
         Ok(Json(payload)) => payload,
         Err(e) => {
@@ -72,7 +58,7 @@ pub async fn create_hog_validated(
         }
     };
 
-    match hog_service.create_hog_validated(valid_request).await {
+    match hog_service.create_hog(valid_request).await {
         Ok(hog) => Json(hog).into_response(),
         Err(err) => ApiError::InternalServerError {
             message: "Failed to create hog".to_string(),
@@ -118,6 +104,16 @@ pub async fn hog_statistics(
         Ok(statistics) => Json(statistics).into_response(),
         Err(err) => {
             let error_message = format!("Failed to fetch hogs: {}", err);
+            (StatusCode::INTERNAL_SERVER_ERROR, error_message).into_response()
+        }
+    }
+}
+
+pub async fn hog_stats(Extension(hog_service): Extension<Arc<HogService>>) -> impl IntoResponse {
+    match hog_service.hog_stats().await {
+        Ok(stats) => Json(stats).into_response(),
+        Err(err) => {
+            let error_message = format!("Failed to fetch hog stats: {}", err);
             (StatusCode::INTERNAL_SERVER_ERROR, error_message).into_response()
         }
     }

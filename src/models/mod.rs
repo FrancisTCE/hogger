@@ -1,7 +1,12 @@
-pub mod hog;
-pub mod client_request;
-pub mod options;
 pub mod advanced_options_request;
 pub mod advanced_options_response;
-pub mod statistics;
+pub mod client_request;
+pub mod hog;
+pub mod hog_bulk_request;
+pub mod hog_bulk_response;
 pub mod hog_client_schema;
+pub mod hog_record;
+pub mod hog_request;
+pub mod hog_response;
+pub mod options;
+pub mod statistics;

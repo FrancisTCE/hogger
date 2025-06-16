@@ -1,4 +1,6 @@
-use bson::doc;
+use std::collections::HashMap;
+
+use bson::{doc, Bson};
 use mongodb::bson::{self, Document};
 use serde::{Deserialize, Serialize};
 
@@ -15,6 +17,8 @@ pub enum Value {
     Bool(bool),
     Number(i32),
     String(String),
+    Object(HashMap<String, Value>),
+    Array(Vec<Value>),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -28,7 +32,7 @@ pub struct OptionsRequest {
     pub log_data_field: Option<String>,
     pub log_data_value: Option<Option<serde_json::Value>>,
     pub log_data_fields: Option<Vec<String>>, // TODO: Implement this
-    pub log_data_values: Option<Vec<Option<serde_json::Value>>>, // TODO: Implement this
+    pub log_data_values: Option<Option<serde_json::Value>>, // TODO: Implement this
     pub log_type: Option<String>,
     pub log_source: Option<String>,
     pub log_source_id: Option<String>,
@@ -48,6 +52,7 @@ pub struct OptionsRequest {
 #[allow(dead_code)]
 pub fn build_filter(options: &OptionsRequest) -> Document {
     let mut filter = Document::new();
+
 
     if let Some(ref log_level) = options.log_level {
         filter.insert("log_level", log_level);
@@ -88,24 +93,21 @@ pub fn build_filter(options: &OptionsRequest) -> Document {
         }
     }
     if options.log_timestamp_start.is_some() || options.log_timestamp_end.is_some() {
-        let mut ts_filter = Document::new();
+        let mut ts_filter: Document = Document::new();
 
         if let Some(start) = options.log_timestamp_start {
-            // Convert chrono::DateTime<Utc> to ISO 8601 string
-            let start_str = start.to_rfc3339_opts(chrono::SecondsFormat::Millis, true);
-            ts_filter.insert("$gte", start_str);
+            ts_filter.insert("$gte", bson::DateTime::from_chrono(start));
         }
 
         if let Some(end) = options.log_timestamp_end {
-            let end_str = end.to_rfc3339_opts(chrono::SecondsFormat::Millis, true);
-            ts_filter.insert("$lte", end_str);
+            ts_filter.insert("$lte", bson::DateTime::from_chrono(end));
         }
-
+        if ts_filter.is_empty() {
+            return filter;
+        }
         filter.insert("log_timestamp", ts_filter);
-        println!("log_timestamp filter: {:?}", filter);
     } else if let Some(timestamp) = options.log_timestamp {
-        let ts_str = timestamp.to_rfc3339_opts(chrono::SecondsFormat::Millis, true);
-        filter.insert("log_timestamp", ts_str);
+        filter.insert("log_timestamp", bson::DateTime::from_chrono(timestamp));
     }
 
     if options.hog_timestamp.is_some()
@@ -115,14 +117,11 @@ pub fn build_filter(options: &OptionsRequest) -> Document {
         let mut hog_ts_filter = Document::new();
 
         if let Some(start) = options.hog_timestamp_start {
-            // Convert to ISO 8601 string with milliseconds + Z
-            let start_str = start.to_rfc3339_opts(chrono::SecondsFormat::Millis, true);
-            hog_ts_filter.insert("$gte", start_str);
+            hog_ts_filter.insert("$gte", bson::DateTime::from_chrono(start));
         }
 
         if let Some(end) = options.hog_timestamp_end {
-            let end_str = end.to_rfc3339_opts(chrono::SecondsFormat::Millis, true);
-            hog_ts_filter.insert("$lte", end_str);
+            hog_ts_filter.insert("$lte", bson::DateTime::from_chrono(end));
         }
 
         if !hog_ts_filter.is_empty() {
@@ -130,9 +129,8 @@ pub fn build_filter(options: &OptionsRequest) -> Document {
         }
     }
 
-    if let Some(ref hog_timestamp) = options.hog_timestamp {
-        let ts_str = hog_timestamp.to_rfc3339_opts(chrono::SecondsFormat::Millis, true);
-        filter.insert("hog_timestamp", ts_str);
+    if let Some(hog_timestamp) = options.hog_timestamp {
+        filter.insert("hog_timestamp", bson::DateTime::from_chrono(hog_timestamp));
     }
 
     if let Some(log_data_value) = &options.log_data_value {
@@ -149,6 +147,20 @@ pub fn build_filter(options: &OptionsRequest) -> Document {
         filter.insert(key, doc! { "$exists": true });
     }
 
+if let Some(Some(log_data_values)) = &options.log_data_values {
+    let mut flat_doc = Document::new();
+    if let Some(map) = log_data_values.as_object() {
+        for (k, v) in map {
+            let prefixed = format!("log_data.{}", k);
+            flat_doc.insert(
+                prefixed,
+                Bson::from(bson::to_bson(v).unwrap())
+            );
+        }
+    }
+        filter.extend(flat_doc);
+    }
+    
     filter
 }
 
@@ -159,7 +171,7 @@ pub fn build_log_data_value_aggregation_pipeline(
 ) -> Vec<Document> {
     let bson_value = match bson::to_bson(value) {
         Ok(v) => v,
-        Err(_) => return vec![], // Handle properly in production
+        Err(_) => return vec![], 
     };
 
     let mut pipeline = vec![
@@ -210,4 +222,25 @@ pub fn build_log_data_value_aggregation_pipeline(
     }
 
     pipeline
+}
+
+fn flatten_json(prefix: Option<String>, value: &Value, doc: &mut Document) {
+    match value {
+        Value::Object(map) => {
+            for (k, v) in map {
+                let new_prefix = match &prefix {
+                    Some(p) => format!("{}.{}", p, k),
+                    None => k.clone(),
+                };
+                flatten_json(Some(new_prefix), v, doc);
+            }
+        }
+        _ => {
+            if let Some(key) = prefix {
+                // Convert serde_json::Value to Bson
+                let bson_value = bson::to_bson(value).unwrap_or(Bson::Null);
+                doc.insert(key, bson_value);
+            }
+        }
+    }
 }

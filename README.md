@@ -187,5 +187,11 @@ Examples:
 | log_source_id          | `"service-abc-42"`                             | Match on unique service/source ID               |
 
 
+### Deploying multiple (3) workers for bulk interactions (default=1)
+
+```bash
+docker compose up --scale hogger-bulk-worker=3
+```
+
 ### Feel free to contribute, file issues, or just stare at the hog 🐗.
 

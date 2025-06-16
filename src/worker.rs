@@ -1,6 +1,8 @@
 mod config;
 mod models;
 
+use bson::DateTime as BsonDateTime;
+use chrono::Utc;
 use futures::StreamExt;
 use governor::{Quota, RateLimiter};
 use lapin::{message::Delivery, options::*, types::FieldTable};
@@ -10,6 +12,8 @@ use serde_json;
 use std::num::NonZeroU32;
 use std::time::Duration;
 use tokio::time::sleep;
+
+use crate::models::hog_record::HogRecord;
 
 #[tokio::main]
 async fn main() {
@@ -51,7 +55,7 @@ async fn main() {
 
     println!("✅ Connected to MongoDB and initialized indexes");
 
-    let collection: Collection<Hog> = db.collection("hog");
+    let collection: Collection<HogRecord> = db.collection("hog");
     let limiter = RateLimiter::direct(Quota::per_second(NonZeroU32::new(400).unwrap()));
 
     while let Some(delivery_result) = consumer.next().await {
@@ -71,12 +75,14 @@ async fn main() {
     std::process::exit(1);
 }
 
-async fn process_message(collection: &Collection<Hog>, delivery: Delivery) -> anyhow::Result<()> {
-    let hog: Hog = serde_json::from_slice(&delivery.data)?;
+async fn process_message(collection: &Collection<HogRecord>, delivery: Delivery) -> anyhow::Result<()> {
+    let mut hog_record: HogRecord = serde_json::from_slice(&delivery.data)?;
 
     const MAX_RETRIES: usize = 5;
     for attempt in 1..=MAX_RETRIES {
-        match collection.insert_one(&hog).await {
+        hog_record.created_at = Some(BsonDateTime::from_chrono(Utc::now()));
+
+        match collection.insert_one(&hog_record).await {
             Ok(_) => {
                 delivery.ack(BasicAckOptions::default()).await?;
                 return Ok(());

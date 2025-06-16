@@ -1,15 +1,18 @@
 mod config;
 mod models;
 
+use bson::DateTime as BsonDateTime;
+use chrono::Utc;
 use futures::StreamExt;
 use governor::{Quota, RateLimiter};
 use lapin::{message::Delivery, options::*, types::FieldTable};
-use models::hog::Hog;
 use mongodb::Collection;
 use serde_json;
 use std::num::NonZeroU32;
 use std::time::{Duration, Instant};
 use tokio::time::{interval, sleep};
+
+use crate::models::hog_record::{self, HogRecord};
 
 const BULK_SIZE: usize = 1000;
 const TIMING_THRESHOLD_SECS: u64 = 1;
@@ -55,7 +58,7 @@ async fn main() {
 
     println!("✅ Connected to MongoDB and initialized indexes");
 
-    let collection: Collection<Hog> = db.collection("hog");
+    let collection: Collection<HogRecord> = db.collection("hog");
     let limiter = RateLimiter::direct(Quota::per_second(NonZeroU32::new(400).unwrap()));
 
     let mut bulk_order = Vec::with_capacity(BULK_SIZE);
@@ -68,9 +71,9 @@ async fn main() {
                 delivery_result = consumer.next() => {
                     match delivery_result {
                         Some(Ok(delivery)) => {
-                            match serde_json::from_slice::<Hog>(&delivery.data) {
-                                Ok(hog) => {
-                                    bulk_order.push(hog);
+                            match serde_json::from_slice::<HogRecord>(&delivery.data) {
+                                Ok(hog_record) => {
+                                    bulk_order.push(hog_record);
                                     bulk_acks.push(delivery);
                                 }
                                 Err(e) => {
@@ -113,12 +116,17 @@ async fn main() {
 }
 
 async fn process_message(
-    collection: &Collection<Hog>,
+    collection: &Collection<HogRecord>,
     deliveries: &[Delivery],
-    hogs: &[Hog],
+    hogs: &[HogRecord],
 ) -> anyhow::Result<()> {
     for attempt in 1..=MAX_RETRIES {
-        match collection.insert_many(hogs).await {
+        let now = BsonDateTime::from_chrono(Utc::now());
+        let mut hog_records = hogs.to_vec();
+        for record in &mut hog_records {
+            record.created_at = Some(now.clone());
+        }
+        match collection.insert_many(hog_records).await {
             Ok(_) => {
                 for d in deliveries {
                     if let Err(e) = d.ack(BasicAckOptions::default()).await {

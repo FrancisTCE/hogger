@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use serde_json::{json, Value};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HogRequest {
@@ -62,6 +63,26 @@ pub async fn validate(req: serde_json::Value) -> Result<HogRequest, ErrorRespons
         }
     };
 
+
+    let _payload = match req.get("log_data") {
+        Some(val) => {
+            if let Some(obj) = val.as_object() {
+                if obj.is_empty() {
+                    None
+                } else {
+                    Some(val.clone())
+                }
+            } else {
+                errors.push(ApiErrorSchema {
+                    field: "log_data".to_string(),
+                    message: "log_data must be a valid JSON object".to_string(),
+                });
+                None
+            }
+        }
+        None => None,
+    };
+
     if errors.is_empty() {
     } else {
         return Err(ErrorResponse {
@@ -72,7 +93,6 @@ pub async fn validate(req: serde_json::Value) -> Result<HogRequest, ErrorRespons
     }
     
     let log_level = req.get("log_level").and_then(|v| v.as_str()).map(|s| s.to_string());
-    
     
     let log_data = req.get("log_data").cloned();
     
