@@ -1,10 +1,10 @@
+use axum::extract::rejection::JsonRejection;
 use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
     Json,
 };
 use serde::{Deserialize, Serialize};
-use axum::extract::rejection::JsonRejection;
 
 use std::error::Error;
 
@@ -44,9 +44,7 @@ pub struct SomeCreateError {
 
 impl SomeCreateError {
     pub fn new(msg: impl Into<String>) -> Self {
-        Self {
-            cause: msg.into(),
-        }
+        Self { cause: msg.into() }
     }
 
     pub fn root_cause(&self) -> &str {
@@ -197,4 +195,3 @@ impl From<SomeCreateError> for ApiError {
         }
     }
 }
-

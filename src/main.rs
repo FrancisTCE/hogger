@@ -6,6 +6,7 @@ mod routes;
 mod utils;
 mod validator;
 mod errors;
+mod metrics;
 
 use dotenv::dotenv;
 use std::{env, net::SocketAddr};

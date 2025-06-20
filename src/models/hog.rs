@@ -1,10 +1,8 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use mongodb::bson::oid::ObjectId;
 
 use super::client_request::ClientRequest;
 
- 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Hog {
     #[serde(flatten)]
@@ -15,7 +13,6 @@ pub struct Hog {
     pub id: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub created_at: Option<DateTime<Utc>>,
-
 }
 
 #[allow(dead_code)]

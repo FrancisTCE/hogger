@@ -1,24 +1,23 @@
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HogRequest {
     pub log_timestamp: String,
-    
+
     #[serde(skip_serializing_if = "Option::is_none")]
     pub log_level: Option<String>,
-    
+
     pub log_message: String,
-    
+
     #[serde(skip_serializing_if = "Option::is_none")]
     pub log_data: Option<serde_json::Value>,
-    
+
     #[serde(skip_serializing_if = "Option::is_none")]
     pub log_type: Option<String>,
-    
+
     #[serde(skip_serializing_if = "Option::is_none")]
     pub log_source: Option<String>,
-    
+
     #[serde(skip_serializing_if = "Option::is_none")]
     pub log_source_id: Option<String>,
 }
@@ -38,7 +37,6 @@ pub struct ErrorResponse {
 
 #[allow(dead_code)]
 pub async fn validate(req: serde_json::Value) -> Result<HogRequest, ErrorResponse> {
-
     let mut errors = Vec::new();
 
     let log_timestamp = match req.get("log_timestamp").and_then(|v| v.as_str()) {
@@ -51,7 +49,7 @@ pub async fn validate(req: serde_json::Value) -> Result<HogRequest, ErrorRespons
             String::new()
         }
     };
-    
+
     let log_message = match req.get("log_message").and_then(|v| v.as_str()) {
         Some(ts) => ts.to_string(),
         None => {
@@ -62,7 +60,6 @@ pub async fn validate(req: serde_json::Value) -> Result<HogRequest, ErrorRespons
             String::new()
         }
     };
-
 
     let _payload = match req.get("log_data") {
         Some(val) => {
@@ -91,15 +88,24 @@ pub async fn validate(req: serde_json::Value) -> Result<HogRequest, ErrorRespons
             errors,
         });
     }
-    
-    let log_level = req.get("log_level").and_then(|v| v.as_str()).map(|s| s.to_string());
-    
+
+    let log_level = req
+        .get("log_level")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
+
     let log_data = req.get("log_data").cloned();
-    
-    let log_type = req.get("log_type").and_then(|v| v.as_str()).map(|s| s.to_string());
-    
-    let log_source = req.get("log_source").and_then(|v| v.as_str()).map(|s| s.to_string());
-    
+
+    let log_type = req
+        .get("log_type")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
+
+    let log_source = req
+        .get("log_source")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
+
     let log_source_id = req
         .get("log_source_id")
         .and_then(|v| v.as_str())

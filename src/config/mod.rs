@@ -1,11 +1,11 @@
 use bson::doc;
+use lapin::{Channel, Connection, ConnectionProperties};
 use mongodb::{options::ClientOptions, Client, Database};
-use lapin::{Connection, ConnectionProperties, Channel};
-use tokio::time::sleep;
 use std::{env, time::Duration};
+use tokio::time::sleep;
 
-use std::sync::atomic::{AtomicBool, Ordering};
 use once_cell::sync::Lazy;
+use std::sync::atomic::{AtomicBool, Ordering};
 
 static INDEXED: Lazy<AtomicBool> = Lazy::new(|| AtomicBool::new(false));
 
@@ -18,6 +18,13 @@ pub async fn init_db() -> mongodb::error::Result<Database> {
         init_db_indexes(&client.database(&db_name)).await?;
         INDEXED.store(true, Ordering::SeqCst);
     }
+    //let db = client.database(&db_name);
+    //db.run_command(doc! {
+    //    "setParameter": 1,
+    //    "logLevel": 0,
+    //    "slowms": 300
+    //}).await.unwrap();
+
     Ok(client.database(&db_name))
 }
 
@@ -27,10 +34,16 @@ pub async fn init_db_indexes(db: &Database) -> mongodb::error::Result<()> {
 
     let indexes = vec![
         IndexModel::builder().keys(doc! { "hog_uuid": 1 }).build(),
-        IndexModel::builder().keys(doc! { "hog_timestamp": -1 }).build(),
-        IndexModel::builder().keys(doc! { "log_timestamp": -1 }).build(),
+        IndexModel::builder()
+            .keys(doc! { "hog_timestamp": -1 })
+            .build(),
+        IndexModel::builder()
+            .keys(doc! { "log_timestamp": -1 })
+            .build(),
         IndexModel::builder().keys(doc! { "log_type": 1 }).build(),
-        IndexModel::builder().keys(doc! { "log_source": 1, "log_timestamp": -1 }).build(),
+        IndexModel::builder()
+            .keys(doc! { "log_source": 1, "log_timestamp": -1 })
+            .build(),
     ];
 
     collection.create_indexes(indexes).await?;
@@ -61,5 +74,9 @@ pub async fn init_rabbitmq() -> lapin::Result<Channel> {
         sleep(delay).await;
     }
 
-    panic!("❌ Failed to connect to RabbitMQ after {} attempts", max_retries);
+    panic!(
+        "❌ Failed to connect to RabbitMQ after {} attempts",
+        max_retries
+    );
 }
+

@@ -4,6 +4,7 @@ use crate::{
 };
 use serde_json::Value;
 
+#[allow(dead_code)]
 pub async fn validate_hog_client_schema(req: Value) -> Result<HogRequest, ValidationError> {
     let mut errors = Vec::new();
 
@@ -33,11 +34,23 @@ pub async fn validate_hog_client_schema(req: Value) -> Result<HogRequest, Valida
         return Err(ValidationError::new(errors));
     }
 
-    let log_level = req.get("log_level").and_then(|v| v.as_str()).map(|s| s.to_string());
+    let log_level = req
+        .get("log_level")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
     let log_data = req.get("log_data").cloned();
-    let log_type = req.get("log_type").and_then(|v| v.as_str()).map(|s| s.to_string());
-    let log_source = req.get("log_source").and_then(|v| v.as_str()).map(|s| s.to_string());
-    let log_source_id = req.get("log_source_id").and_then(|v| v.as_str()).map(|s| s.to_string());
+    let log_type = req
+        .get("log_type")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
+    let log_source = req
+        .get("log_source")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
+    let log_source_id = req
+        .get("log_source_id")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
 
     Ok(HogRequest {
         log_timestamp,

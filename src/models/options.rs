@@ -38,12 +38,9 @@ pub struct OptionsRequest {
     pub log_source_id: Option<String>,
     pub hog_uuid: Option<String>,
     pub hog_limit: Option<i64>,
-    pub hog_partial: Option<bool>, // TODO: Implement this, currently only partial on mensage
+    pub hog_sort: Option<SortType>,       // TODO: Implement this
+    pub hog_partial: Option<bool>,        // TODO: Implement this, currently only partial on mensage
     pub hog_case_sensitive: Option<bool>, // TODO: Implement this
-    pub hog_sort: Option<SortType>, // TODO: Implement this 
-    pub hog_sort_field: Option<String>, // TODO: Implement this
-    pub hog_fields: Option<Vec<String>>, // TODO: Implement this
-    pub hog_values: Option<Vec<Option<Value>>>, // TODO: Implement this
     pub hog_timestamp: Option<chrono::DateTime<chrono::Utc>>,
     pub hog_timestamp_start: Option<chrono::DateTime<chrono::Utc>>,
     pub hog_timestamp_end: Option<chrono::DateTime<chrono::Utc>>,
@@ -52,7 +49,6 @@ pub struct OptionsRequest {
 #[allow(dead_code)]
 pub fn build_filter(options: &OptionsRequest) -> Document {
     let mut filter = Document::new();
-
 
     if let Some(ref log_level) = options.log_level {
         filter.insert("log_level", log_level);
@@ -79,7 +75,7 @@ pub fn build_filter(options: &OptionsRequest) -> Document {
     if let Some(ref log_type) = options.log_type {
         filter.insert("log_type", log_type);
     }
-   
+
     if let Some(ref hog_uuid) = options.hog_uuid {
         filter.insert("hog_uuid", hog_uuid);
     }
@@ -147,20 +143,17 @@ pub fn build_filter(options: &OptionsRequest) -> Document {
         filter.insert(key, doc! { "$exists": true });
     }
 
-if let Some(Some(log_data_values)) = &options.log_data_values {
-    let mut flat_doc = Document::new();
-    if let Some(map) = log_data_values.as_object() {
-        for (k, v) in map {
-            let prefixed = format!("log_data.{}", k);
-            flat_doc.insert(
-                prefixed,
-                Bson::from(bson::to_bson(v).unwrap())
-            );
+    if let Some(Some(log_data_values)) = &options.log_data_values {
+        let mut flat_doc = Document::new();
+        if let Some(map) = log_data_values.as_object() {
+            for (k, v) in map {
+                let prefixed = format!("log_data.{}", k);
+                flat_doc.insert(prefixed, Bson::from(bson::to_bson(v).unwrap()));
+            }
         }
-    }
         filter.extend(flat_doc);
     }
-    
+
     filter
 }
 
@@ -171,7 +164,7 @@ pub fn build_log_data_value_aggregation_pipeline(
 ) -> Vec<Document> {
     let bson_value = match bson::to_bson(value) {
         Ok(v) => v,
-        Err(_) => return vec![], 
+        Err(_) => return vec![],
     };
 
     let mut pipeline = vec![
@@ -224,23 +217,340 @@ pub fn build_log_data_value_aggregation_pipeline(
     pipeline
 }
 
-fn flatten_json(prefix: Option<String>, value: &Value, doc: &mut Document) {
-    match value {
-        Value::Object(map) => {
-            for (k, v) in map {
-                let new_prefix = match &prefix {
-                    Some(p) => format!("{}.{}", p, k),
-                    None => k.clone(),
-                };
-                flatten_json(Some(new_prefix), v, doc);
-            }
-        }
-        _ => {
-            if let Some(key) = prefix {
-                // Convert serde_json::Value to Bson
-                let bson_value = bson::to_bson(value).unwrap_or(Bson::Null);
-                doc.insert(key, bson_value);
-            }
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ApiErrorSchema {
+    pub field: String,
+    pub message: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ErrorResponse {
+    pub status_code: u16,
+    pub message: String,
+    pub errors: Vec<ApiErrorSchema>,
+}
+
+#[allow(dead_code)]
+pub async fn validate_options(req: serde_json::Value) -> Result<OptionsRequest, ErrorResponse> {
+    let mut errors = Vec::new();
+
+    // Example: extract fields as Option<T>
+    let log_level = req
+        .get("log_level")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
+    if let Some(ref lvl) = log_level {
+        if lvl.trim().is_empty() {
+            errors.push(ApiErrorSchema {
+                field: "log_level".to_string(),
+                message: "log_level cannot be empty".to_string(),
+            });
         }
     }
+
+    let log_message = req
+        .get("log_message")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
+    if let Some(ref msg) = log_message {
+        if msg.trim().is_empty() {
+            errors.push(ApiErrorSchema {
+                field: "log_message".to_string(),
+                message: "log_message cannot be empty".to_string(),
+            });
+        }
+    }
+
+    let log_data_values = req.get("log_data").cloned();
+    if let Some(ref log_data) = log_data_values {
+        if !log_data.is_object() {
+            errors.push(ApiErrorSchema {
+                field: "log_data".to_string(),
+                message: "log_data must be a valid JSON object".to_string(),
+            });
+        }
+    }
+
+    let log_type = req
+        .get("log_type")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
+    if let Some(ref t) = log_type {
+        if t.trim().is_empty() {
+            errors.push(ApiErrorSchema {
+                field: "log_type".to_string(),
+                message: "log_type cannot be empty".to_string(),
+            });
+        }
+    }
+
+    let log_source = req
+        .get("log_source")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
+    if let Some(ref src) = log_source {
+        if src.trim().is_empty() {
+            errors.push(ApiErrorSchema {
+                field: "log_source".to_string(),
+                message: "log_source cannot be empty".to_string(),
+            });
+        }
+    }
+
+    let log_source_id = req
+        .get("log_source_id")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
+    if let Some(ref src_id) = log_source_id {
+        if src_id.trim().is_empty() {
+            errors.push(ApiErrorSchema {
+                field: "log_source_id".to_string(),
+                message: "log_source_id cannot be empty".to_string(),
+            });
+        }
+    }
+
+    let log_timestamp = req
+        .get("log_timestamp")
+        .and_then(|v| v.as_str())
+        .and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok())
+        .map(|dt| dt.with_timezone(&chrono::Utc));
+    if let Some(ts) = log_timestamp {
+        if ts.timestamp() < 0 {
+            errors.push(ApiErrorSchema {
+                field: "log_timestamp".to_string(),
+                message: "log_timestamp cannot be before epoch".to_string(),
+            });
+        }
+    }
+    let log_timestamp_start = req
+        .get("log_timestamp_start")
+        .and_then(|v| v.as_str())
+        .and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok())
+        .map(|dt| dt.with_timezone(&chrono::Utc));
+    if let Some(ts) = log_timestamp_start {
+        if ts.timestamp() < 0 {
+            errors.push(ApiErrorSchema {
+                field: "log_timestamp_start".to_string(),
+                message: "log_timestamp_start cannot be before epoch".to_string(),
+            });
+        }
+    }
+    let log_timestamp_end = req
+        .get("log_timestamp_end")
+        .and_then(|v| v.as_str())
+        .and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok())
+        .map(|dt| dt.with_timezone(&chrono::Utc));
+    if let Some(ts) = log_timestamp_end {
+        if ts.timestamp() < 0 {
+            errors.push(ApiErrorSchema {
+                field: "log_timestamp_end".to_string(),
+                message: "log_timestamp_end cannot be before epoch".to_string(),
+            });
+        }
+    }
+
+    let hog_uuid = req
+        .get("hog_uuid")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
+    if let Some(ref uuid) = hog_uuid {
+        if uuid.trim().is_empty() {
+            errors.push(ApiErrorSchema {
+                field: "hog_uuid".to_string(),
+                message: "hog_uuid cannot be empty".to_string(),
+            });
+        }
+    }
+    let hog_limit = req.get("hog_limit").and_then(|v| v.as_i64());
+    if let Some(limit) = hog_limit {
+        if limit <= 0 {
+            errors.push(ApiErrorSchema {
+                field: "hog_limit".to_string(),
+                message: "hog_limit must be greater than zero".to_string(),
+            });
+        }
+    }
+    let hog_partial = req.get("hog_partial").and_then(|v| v.as_bool());
+    if let Some(partial) = hog_partial {
+        if !partial {
+            errors.push(ApiErrorSchema {
+                field: "hog_partial".to_string(),
+                message: "hog_partial must be true for this operation".to_string(),
+            });
+        }
+    }
+    let hog_case_sensitive = req.get("hog_case_sensitive").and_then(|v| v.as_bool());
+    if let Some(case_sensitive) = hog_case_sensitive {
+        if !case_sensitive {
+            errors.push(ApiErrorSchema {
+                field: "hog_case_sensitive".to_string(),
+                message: "hog_case_sensitive must be true for this operation".to_string(),
+            });
+        }
+    }
+    let hog_sort = req.get("hog_sort").and_then(|v| v.as_str()).map(|s| {
+        Some(match s {
+            "ascending" => SortType::Ascending,
+            "descending" => SortType::Descending,
+            _ => {
+                errors.push(ApiErrorSchema {
+                    field: "hog_sort".to_string(),
+                    message: "hog_sort must be 'ascending' or 'descending'".to_string(),
+                });
+                return None;
+            }
+        })
+    });
+
+    let hog_sort_field = req
+        .get("hog_sort_field")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
+    if let Some(ref sort_field) = hog_sort_field {
+        if sort_field.trim().is_empty() {
+            errors.push(ApiErrorSchema {
+                field: "hog_sort_field".to_string(),
+                message: "hog_sort_field cannot be empty".to_string(),
+            });
+        }
+    }
+    let hog_fields = req.get("hog_fields").and_then(|v| v.as_array()).map(|arr| {
+        arr.iter()
+            .filter_map(|v| v.as_str().map(|s| s.to_string()))
+            .collect::<Vec<String>>()
+    });
+    if let Some(ref fields) = hog_fields {
+        if fields.is_empty() {
+            errors.push(ApiErrorSchema {
+                field: "hog_fields".to_string(),
+                message: "hog_fields cannot be empty".to_string(),
+            });
+        }
+    }
+
+    let hog_timestamp = req
+        .get("hog_timestamp")
+        .and_then(|v| v.as_str())
+        .and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok())
+        .map(|dt| dt.with_timezone(&chrono::Utc));
+    if let Some(ts) = hog_timestamp {
+        if ts.timestamp() < 0 {
+            errors.push(ApiErrorSchema {
+                field: "hog_timestamp".to_string(),
+                message: "hog_timestamp cannot be before epoch".to_string(),
+            });
+        }
+    }
+    let hog_timestamp_start = req
+        .get("hog_timestamp_start")
+        .and_then(|v| v.as_str())
+        .and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok())
+        .map(|dt| dt.with_timezone(&chrono::Utc));
+    if let Some(ts) = hog_timestamp_start {
+        if ts.timestamp() < 0 {
+            errors.push(ApiErrorSchema {
+                field: "hog_timestamp_start".to_string(),
+                message: "hog_timestamp_start cannot be before epoch".to_string(),
+            });
+        }
+    }
+    let hog_timestamp_end = req
+        .get("hog_timestamp_end")
+        .and_then(|v| v.as_str())
+        .and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok())
+        .map(|dt| dt.with_timezone(&chrono::Utc));
+    if let Some(ts) = hog_timestamp_end {
+        if ts.timestamp() < 0 {
+            errors.push(ApiErrorSchema {
+                field: "hog_timestamp_end".to_string(),
+                message: "hog_timestamp_end cannot be before epoch".to_string(),
+            });
+        }
+    }
+
+    let log_data = req.get("log_data").and_then(|v| v.as_object()).cloned();
+    if let Some(ref data) = log_data {
+        if data.is_empty() {
+            errors.push(ApiErrorSchema {
+                field: "log_data".to_string(),
+                message: "log_data cannot be empty".to_string(),
+            });
+        }
+    }
+    let log_data_field = req
+        .get("log_data_field")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
+    if let Some(ref field) = log_data_field {
+        if field.trim().is_empty() {
+            errors.push(ApiErrorSchema {
+                field: "log_data_field".to_string(),
+                message: "log_data_field cannot be empty".to_string(),
+            });
+        }
+    }
+    let log_data_value = req
+        .get("log_data_value")
+        .and_then(|v| v.as_object())
+        .cloned();
+    if let Some(ref value) = log_data_value {
+        if value.is_empty() {
+            errors.push(ApiErrorSchema {
+                field: "log_data_value".to_string(),
+                message: "log_data_value cannot be empty".to_string(),
+            });
+        }
+    }
+    let log_data_fields = req
+        .get("log_data_fields")
+        .and_then(|v| v.as_array())
+        .map(|arr| {
+            arr.iter()
+                .filter_map(|v| v.as_str().map(|s| s.to_string()))
+                .collect::<Vec<String>>()
+        });
+    if let Some(ref fields) = log_data_fields {
+        if fields.is_empty() {
+            errors.push(ApiErrorSchema {
+                field: "log_data_fields".to_string(),
+                message: "log_data_fields cannot be empty".to_string(),
+            });
+        }
+    }
+
+    if !errors.is_empty() {
+        return Err(ErrorResponse {
+            status_code: 400,
+            message: "Validation errors occurred".to_string(),
+            errors,
+        });
+    }
+
+    // Build OptionsRequest from validated fields
+    let options = OptionsRequest {
+        log_level,
+        log_message,
+        log_data_values: log_data_values.map(Some), // or adjust as needed for your struct
+        log_type,
+        log_source,
+        log_source_id,
+        log_timestamp,
+        log_timestamp_start,
+        log_timestamp_end,
+        log_data: log_data.map(serde_json::Value::Object),
+        log_data_field,
+        log_data_value: log_data_value.map(|v| Some(serde_json::Value::Object(v))),
+        log_data_fields,
+        hog_uuid,
+        hog_limit,
+        hog_partial,
+        hog_sort: hog_sort.flatten(),
+        hog_case_sensitive,
+        hog_timestamp,
+        hog_timestamp_start,
+        hog_timestamp_end,
+    };
+
+    Ok(options)
 }

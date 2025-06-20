@@ -12,7 +12,7 @@ use std::num::NonZeroU32;
 use std::time::{Duration, Instant};
 use tokio::time::{interval, sleep};
 
-use crate::models::hog_record::{self, HogRecord};
+use crate::models::hog_record::HogRecord;
 
 const BULK_SIZE: usize = 1000;
 const TIMING_THRESHOLD_SECS: u64 = 1;
@@ -68,50 +68,50 @@ async fn main() {
     let mut flush_interval = interval(Duration::from_secs(TIMING_THRESHOLD_SECS));
     loop {
         tokio::select! {
-                delivery_result = consumer.next() => {
-                    match delivery_result {
-                        Some(Ok(delivery)) => {
-                            match serde_json::from_slice::<HogRecord>(&delivery.data) {
-                                Ok(hog_record) => {
-                                    bulk_order.push(hog_record);
-                                    bulk_acks.push(delivery);
-                                }
-                                Err(e) => {
-                                    eprintln!("Failed to deserialize Hog: {:?}", e);
-                                    continue;
-                                }
+            delivery_result = consumer.next() => {
+                match delivery_result {
+                    Some(Ok(delivery)) => {
+                        match serde_json::from_slice::<HogRecord>(&delivery.data) {
+                            Ok(hog_record) => {
+                                bulk_order.push(hog_record);
+                                bulk_acks.push(delivery);
                             }
-                            if bulk_order.len() >= BULK_SIZE {
-                                limiter.until_ready().await;
-                                if let Err(e) = process_message(&collection, &bulk_acks, &bulk_order).await {
-                                    eprintln!("Error processing message batch: {:?}", e);
-                                }
-                                bulk_acks.clear();
-                                bulk_order.clear();
-                                _timing_start = Instant::now();
+                            Err(e) => {
+                                eprintln!("Failed to deserialize Hog: {:?}", e);
+                                continue;
                             }
                         }
-                        Some(Err(e)) => {
-                            eprintln!("Failed to consume message: {:?}", e);
+                        if bulk_order.len() >= BULK_SIZE {
+                            limiter.until_ready().await;
+                            if let Err(e) = process_message(&collection, &bulk_acks, &bulk_order).await {
+                                eprintln!("Error processing message batch: {:?}", e);
+                            }
+                            bulk_acks.clear();
+                            bulk_order.clear();
+                            _timing_start = Instant::now();
                         }
-                        None => {
-                            println!("Consumer stream ended, exiting...");
-                            std::process::exit(1);
-                        },
                     }
-                }
-                _ = flush_interval.tick() => {
-                    if !bulk_order.is_empty() {
-                        limiter.until_ready().await;
-                        if let Err(e) = process_message(&collection, &bulk_acks, &bulk_order).await {
-                            eprintln!("Error processing message batch: {:?}", e);
-                        }
-                        bulk_acks.clear();
-                        bulk_order.clear();
-                        _timing_start = Instant::now();
+                    Some(Err(e)) => {
+                        eprintln!("Failed to consume message: {:?}", e);
                     }
+                    None => {
+                        println!("Consumer stream ended, exiting...");
+                        std::process::exit(1);
+                    },
                 }
             }
+            _ = flush_interval.tick() => {
+                if !bulk_order.is_empty() {
+                    limiter.until_ready().await;
+                    if let Err(e) = process_message(&collection, &bulk_acks, &bulk_order).await {
+                        eprintln!("Error processing message batch: {:?}", e);
+                    }
+                    bulk_acks.clear();
+                    bulk_order.clear();
+                    _timing_start = Instant::now();
+                }
+            }
+        }
     }
 }
 

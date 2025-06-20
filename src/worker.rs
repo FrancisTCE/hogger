@@ -6,7 +6,6 @@ use chrono::Utc;
 use futures::StreamExt;
 use governor::{Quota, RateLimiter};
 use lapin::{message::Delivery, options::*, types::FieldTable};
-use models::hog::Hog;
 use mongodb::Collection;
 use serde_json;
 use std::num::NonZeroU32;

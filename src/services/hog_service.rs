@@ -10,7 +10,6 @@ use lapin::{BasicProperties, Channel};
 use mongodb::options::FindOptions;
 use mongodb::{bson::doc, Collection, Database};
 
-use serde_json::Map;
 use uuid::Uuid;
 
 pub struct HogService {
@@ -157,32 +156,9 @@ impl HogService {
         }
     }
 
-    pub async fn hog_stats(&self) -> Result<Map<String, serde_json::Value>, mongodb::error::Error> {
+    pub async fn hog_stats(&self) -> Result<bson::Document, mongodb::error::Error> {
         let stats = self.db.run_command(doc! { "collStats": "hog" }).await?;
-        // parse the stats into a more usable format
-        let stats_doc = bson::from_document::<bson::Document>(stats)?;
-        // further process the stats to retrieve record count, index sizes, etc.
-        let record_count = stats_doc
-            .get_i64("count")
-            .unwrap_or(0);
-        let default_doc = doc! {};
-        let index_sizes = stats_doc
-            .get_document("indexSizes")
-            .unwrap_or(&default_doc);
-        let index_sizes_parsed: Map<String, serde_json::Value> = index_sizes
-            .iter()
-            .map(|(k, v)| {
-                (
-                    k.clone(),
-                    serde_json::to_value(v.as_i64().unwrap_or(0)).unwrap_or(serde_json::Value::Null),
-                )
-            })
-            .collect();
-
-        let mut stats_parsed = Map::new();
-        stats_parsed.insert("record_count".to_string(), serde_json::Value::from(record_count));
-        stats_parsed.insert("index_sizes".to_string(), serde_json::Value::Object(index_sizes_parsed));
-        Ok(stats_parsed)
+        Ok(stats)
     }
 
     pub async fn hog_statistics(&self) -> Result<HogStatistics, mongodb::error::Error> {
