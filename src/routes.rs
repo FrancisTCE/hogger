@@ -1,4 +1,4 @@
-use axum::{routing::get, routing::post, Extension, Router};
+use axum::{Extension, Router, routing::get, routing::post};
 use std::sync::Arc;
 
 use crate::{controllers::hog_controller, services::hog_service::HogService};

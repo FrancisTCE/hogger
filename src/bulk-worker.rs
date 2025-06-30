@@ -8,6 +8,7 @@ use governor::{Quota, RateLimiter};
 use lapin::{message::Delivery, options::*, types::FieldTable};
 use mongodb::Collection;
 use serde_json;
+use std::env;
 use std::num::NonZeroU32;
 use std::time::{Duration, Instant};
 use tokio::time::{interval, sleep};
@@ -20,6 +21,9 @@ const MAX_RETRIES: usize = 5;
 
 #[tokio::main]
 async fn main() {
+    let consumer_tag =
+        env::var("CONSUMER_TAG").unwrap_or_else(|_| uuid::Uuid::new_v4().to_string());
+
     let channel = config::init_rabbitmq()
         .await
         .expect("Failed to connect to RabbitMQ");
@@ -41,13 +45,13 @@ async fn main() {
     let mut consumer = channel
         .basic_consume(
             "hog_queue",
-            "hog_worker_bulk",
+            format!("hog_worker_bulk_{}", consumer_tag).as_str(),
             BasicConsumeOptions::default(),
             FieldTable::default(),
         )
         .await
         .unwrap();
-
+    println!("RabbitMQ consumer started with tag: {}", consumer_tag);
     let db = config::init_db()
         .await
         .expect("Failed to connect to MongoDB");

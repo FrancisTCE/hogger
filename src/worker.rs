@@ -8,6 +8,7 @@ use governor::{Quota, RateLimiter};
 use lapin::{message::Delivery, options::*, types::FieldTable};
 use mongodb::Collection;
 use serde_json;
+use std::env;
 use std::num::NonZeroU32;
 use std::time::Duration;
 use tokio::time::sleep;
@@ -16,6 +17,9 @@ use crate::models::hog_record::HogRecord;
 
 #[tokio::main]
 async fn main() {
+    let consumer_tag =
+        env::var("CONSUMER_TAG").unwrap_or_else(|_| uuid::Uuid::new_v4().to_string());
+
     let channel = config::init_rabbitmq()
         .await
         .expect("Failed to connect to RabbitMQ");
@@ -37,7 +41,7 @@ async fn main() {
     let mut consumer = channel
         .basic_consume(
             "hog_queue",
-            "hog_worker_single",
+            format!("hog_worker_single_{}", consumer_tag).as_str(),
             BasicConsumeOptions::default(),
             FieldTable::default(),
         )
@@ -74,7 +78,10 @@ async fn main() {
     std::process::exit(1);
 }
 
-async fn process_message(collection: &Collection<HogRecord>, delivery: Delivery) -> anyhow::Result<()> {
+async fn process_message(
+    collection: &Collection<HogRecord>,
+    delivery: Delivery,
+) -> anyhow::Result<()> {
     let mut hog_record: HogRecord = serde_json::from_slice(&delivery.data)?;
 
     const MAX_RETRIES: usize = 5;
@@ -95,7 +102,6 @@ async fn process_message(collection: &Collection<HogRecord>, delivery: Delivery)
                     sleep(Duration::from_millis(500 * attempt as u64)).await;
                 }
             }
-            
         }
     }
 

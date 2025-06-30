@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use bson::{doc, Bson};
+use bson::{Bson, doc};
 use mongodb::bson::{self, Document};
 use serde::{Deserialize, Serialize};
 
@@ -148,12 +148,11 @@ pub fn build_filter(options: &OptionsRequest) -> Document {
         if let Some(map) = log_data_values.as_object() {
             for (k, v) in map {
                 let prefixed = format!("log_data.{}", k);
-                flat_doc.insert(prefixed, Bson::from(bson::to_bson(v).unwrap()));
+                flat_doc.insert(prefixed.clone(), Bson::from(bson::to_bson(v).unwrap()));
             }
         }
         filter.extend(flat_doc);
     }
-
     filter
 }
 
@@ -261,7 +260,7 @@ pub async fn validate_options(req: serde_json::Value) -> Result<OptionsRequest, 
         }
     }
 
-    let log_data_values = req.get("log_data").cloned();
+    let log_data_values = req.get("log_data_values").cloned();
     if let Some(ref log_data) = log_data_values {
         if !log_data.is_object() {
             errors.push(ApiErrorSchema {

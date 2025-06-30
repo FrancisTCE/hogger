@@ -2,9 +2,10 @@
 FROM rust:latest AS builder
 WORKDIR /usr/src/hogger
 
-COPY Cargo.toml Cargo.lock* ./
+# Copy full source code and build
+COPY Cargo.toml .
+COPY Cargo.lock . 
 COPY src ./src
-
 RUN cargo build --release
 
 # ---- Runtime Stage ----
@@ -14,13 +15,10 @@ RUN apt-get update && apt-get install -y libssl3 ca-certificates && rm -rf /var/
 
 WORKDIR /usr/src/hogger
 
-# Correct paths
 COPY --from=builder /usr/src/hogger/target/release/hogger ./hogger
 COPY --from=builder /usr/src/hogger/target/release/hogger-worker ./hogger-worker
 COPY --from=builder /usr/src/hogger/target/release/hogger-bulk-worker ./hogger-bulk-worker
 
-# Expose the default port for the API
 EXPOSE 3000
 
-# Default command: API
 CMD ["./hogger"]

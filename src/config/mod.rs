@@ -1,6 +1,6 @@
 use bson::doc;
 use lapin::{Channel, Connection, ConnectionProperties};
-use mongodb::{options::ClientOptions, Client, Database};
+use mongodb::{Client, Database, options::ClientOptions};
 use std::{env, time::Duration};
 use tokio::time::sleep;
 
@@ -79,4 +79,3 @@ pub async fn init_rabbitmq() -> lapin::Result<Channel> {
         max_retries
     );
 }
-

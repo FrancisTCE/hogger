@@ -1,5 +1,6 @@
 use bson::DateTime as BsonDateTime;
 use chrono::{DateTime, Timelike, Utc};
+use mongodb::bson::oid::ObjectId;
 
 use crate::models::{client_request::ClientRequest, hog::Hog, hog_record::HogRecord};
 
@@ -18,14 +19,15 @@ pub fn convert_timestamp_bson_to_chrono(datetime: BsonDateTime) -> DateTime<Utc>
 }
 
 pub fn convert_timestamp_bson_to_string(datetime: BsonDateTime) -> String {
-    datetime.to_chrono().to_rfc3339_opts(chrono::SecondsFormat::Millis, true)
+    datetime
+        .to_chrono()
+        .to_rfc3339_opts(chrono::SecondsFormat::Millis, true)
 }
 
 pub fn rfc3339_str_to_bson(rfc3339: &str) -> Result<BsonDateTime, chrono::ParseError> {
     let chrono_dt: DateTime<Utc> = rfc3339.parse()?;
     Ok(BsonDateTime::from_chrono(chrono_dt))
 }
-
 
 pub fn convert_hog_records_to_hogs(hog_records: Vec<HogRecord>) -> Vec<Hog> {
     hog_records
@@ -51,12 +53,8 @@ pub fn convert_hog_records_to_hogs(hog_records: Vec<HogRecord>) -> Vec<Hog> {
         .collect()
 }
 
-
-use mongodb::bson::oid::ObjectId;
-
 pub fn convert_hogs_to_hog_records(hogs: Vec<Hog>) -> Vec<HogRecord> {
-    hogs
-        .into_iter()
+    hogs.into_iter()
         .map(|hog| {
             HogRecord {
                 log_timestamp: rfc3339_str_to_bson(&hog.client_request.log_timestamp).unwrap(),
@@ -75,7 +73,6 @@ pub fn convert_hogs_to_hog_records(hogs: Vec<Hog>) -> Vec<HogRecord> {
         .collect()
 }
 
-
 pub fn convert_hog_to_hog_record(hog: &Hog) -> HogRecord {
     HogRecord {
         log_timestamp: rfc3339_str_to_bson(&hog.client_request.log_timestamp).unwrap(),
@@ -92,7 +89,6 @@ pub fn convert_hog_to_hog_record(hog: &Hog) -> HogRecord {
     }
 }
 
-
 pub fn convert_hog_record_to_hog(hog_record: &HogRecord) -> Hog {
     Hog {
         client_request: ClientRequest {
@@ -106,7 +102,7 @@ pub fn convert_hog_record_to_hog(hog_record: &HogRecord) -> Hog {
         },
         hog_uuid: hog_record.hog_uuid.clone(),
         hog_timestamp: hog_record.hog_timestamp.map(|dt| dt.to_chrono()),
-        id: hog_record.id.map(|oid| oid.to_hex()), // ObjectId -> String
+        id: hog_record.id.as_ref().map(|oid| oid.to_hex()), // ObjectId -> String
         created_at: hog_record.created_at.map(convert_timestamp_bson_to_chrono),
     }
 }
